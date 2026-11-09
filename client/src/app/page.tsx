@@ -65,14 +65,16 @@ export default function DashboardPage() {
     // Auto-refresh data every 30s to look "live"
     const dataInterval = setInterval(() => loadData(), 30000);
     // Cycle live feed events every 8s for drama
+    let pulseTimeout: ReturnType<typeof setTimeout> | null = null;
     const feedInterval = setInterval(() => {
       setFeedOffset((prev) => (prev + 1) % (ALL_FEED_EVENTS.length - 4));
       setNewEventPulse(true);
-      setTimeout(() => setNewEventPulse(false), 1200);
+      pulseTimeout = setTimeout(() => setNewEventPulse(false), 1200);
     }, 8000);
     return () => {
       clearInterval(dataInterval);
       clearInterval(feedInterval);
+      if (pulseTimeout) clearTimeout(pulseTimeout);
     };
   }, []);
 

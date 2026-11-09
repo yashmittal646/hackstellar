@@ -18,6 +18,9 @@ import {
   Truck,
   AlertTriangle,
   X,
+  TrendingUp,
+  Percent,
+  Star,
 } from "lucide-react";
 
 type BatchResult = { returnId: string; product: string; grade: string; risk: string; decision: string };
@@ -145,6 +148,16 @@ export default function ReturnsFleetPage() {
     return <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />;
   };
 
+  // Compute live stats
+  const routedCount = returns.filter((r) => r.routingDestination).length;
+  const routedPct = returns.length > 0 ? Math.round((routedCount / returns.length) * 100) : 0;
+  const peerCount = returns.filter((r) => r.routingDestination === "direct_to_customer").length;
+  const highRiskCount = returns.filter((r) => r.fraudRisk === "high").length;
+  const totalSaved = returns.reduce((acc, r) => acc + (r.costSaved || 0), 0);
+  const avgScore = returns.length > 0
+    ? Math.round(returns.reduce((acc, r) => acc + (r.conditionScore || 0), 0) / returns.length)
+    : 0;
+
   return (
     <div className="container mx-auto max-w-7xl px-4 sm:px-6 py-8 space-y-6">
       {/* Header */}
@@ -184,6 +197,25 @@ export default function ReturnsFleetPage() {
           </button>
         </div>
       </div>
+
+      {/* Live Stats Bar */}
+      {!loading && returns.length > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          {[
+            { label: "Routed", value: `${routedPct}%`, sub: `${routedCount}/${returns.length}`, color: "text-emerald-400", border: "border-emerald-500/20 bg-emerald-500/5" },
+            { label: "Direct Peer", value: peerCount, sub: "intercepts", color: "text-violet-400", border: "border-violet-500/20 bg-violet-500/5" },
+            { label: "High Risk", value: highRiskCount, sub: "flagged", color: "text-red-400", border: "border-red-500/20 bg-red-500/5" },
+            { label: "Cost Saved", value: `₹${(totalSaved / 1000).toFixed(1)}k`, sub: "total", color: "text-teal-400", border: "border-teal-500/20 bg-teal-500/5" },
+            { label: "Avg Score", value: avgScore > 0 ? `${avgScore}/100` : "—", sub: "condition", color: "text-amber-400", border: "border-amber-500/20 bg-amber-500/5" },
+          ].map((s) => (
+            <div key={s.label} className={`rounded-2xl border p-3.5 ${s.border}`}>
+              <div className={`text-lg font-black ${s.color}`}>{s.value}</div>
+              <div className="text-[11px] text-slate-400 font-semibold">{s.label}</div>
+              <div className="text-[10px] text-slate-600">{s.sub}</div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Batch Progress Bar */}
       {batchRunning && (

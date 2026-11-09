@@ -434,6 +434,24 @@ export default function NewReturnPage() {
                 Full Agent Lab
               </button>
             </div>
+
+            {/* Savings summary banner */}
+            <div className="rounded-2xl border border-emerald-500/15 bg-emerald-500/5 p-4 flex flex-wrap items-center justify-center gap-6 text-center">
+              <div>
+                <div className="text-xl font-black text-emerald-400">₹{dossier.dispatcher?.savings?.costSavedINR?.toLocaleString() || 0}</div>
+                <div className="text-[11px] text-white/40 mt-0.5">Cost Saved</div>
+              </div>
+              <div className="text-white/20">|</div>
+              <div>
+                <div className="text-xl font-black text-teal-400">{dossier.dispatcher?.savings?.co2SavedKg || 0} kg</div>
+                <div className="text-[11px] text-white/40 mt-0.5">CO₂ Avoided</div>
+              </div>
+              <div className="text-white/20">|</div>
+              <div>
+                <div className="text-xl font-black text-indigo-400">{dossier.dispatcher?.savings?.distanceAvoidedKm || 0} km</div>
+                <div className="text-[11px] text-white/40 mt-0.5">Distance Saved</div>
+              </div>
+            </div>
           </div>
         )}
       </div>

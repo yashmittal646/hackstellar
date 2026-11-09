@@ -209,6 +209,7 @@ export default function AgentLabPage() {
   const [copilotLoading, setCopilotLoading] = useState(false);
   const [chatHistory, setChatHistory] = useState<{ q: string; a: string }[]>([]);
   const chatRef = useRef<HTMLDivElement>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
 
   async function runPipeline(payload: any, presetId: string) {
     setRunning(true);
@@ -221,6 +222,8 @@ export default function AgentLabPage() {
     try {
       const result = await runAgentInspect(payload);
       setDossier(result);
+      // Auto-scroll to results
+      setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
       // Animate chain of thought reveal
       let i = 0;
       const cot = result.unifiedChainOfThought || [];
@@ -384,7 +387,7 @@ export default function AgentLabPage() {
 
         {/* Results */}
         {dossier && !running && (
-          <div className="space-y-6">
+          <div ref={resultsRef} className="space-y-6">
             {/* Summary banner */}
             <div className="rounded-2xl border border-white/8 bg-gradient-to-r from-[#0d1117] via-[#111827] to-[#0d1117] p-6">
               <div className="flex items-start justify-between gap-4 flex-wrap">
