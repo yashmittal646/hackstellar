@@ -7,11 +7,7 @@ import {
   ShieldAlert,
   Sparkles,
   Truck,
-  CheckCircle2,
   AlertTriangle,
-  Lock,
-  Unlock,
-  Eye,
   Zap,
 } from "lucide-react";
 
@@ -74,15 +70,20 @@ export function ReturnCard({ item, onProcess }: ReturnCardProps) {
 
   const isUnrouted = !item.routingDestination;
   const isHighFraud = item.fraudRisk === "high";
+  const conditionScore = item.conditionScore || 0;
+  const conditionBarColor =
+    conditionScore >= 75 ? "bg-emerald-500" : conditionScore >= 45 ? "bg-amber-500" : "bg-red-500";
 
   return (
-    <div className={`rounded-2xl border p-5 transition-all hover:scale-[1.01] hover:shadow-xl shadow-sm ${
-      isHighFraud
-        ? "border-rose-500/30 bg-rose-950/10 hover:border-rose-500/50"
-        : isUnrouted
-        ? "border-violet-500/20 bg-[#0d0a1a]/60 hover:border-violet-500/40"
-        : "border-slate-800 bg-slate-900/60 hover:border-slate-700"
-    }`}>
+    <div
+      className={`rounded-2xl border p-5 transition-all hover:scale-[1.01] hover:shadow-xl shadow-sm ${
+        isHighFraud
+          ? "border-rose-500/30 bg-rose-950/10 hover:border-rose-500/50"
+          : isUnrouted
+          ? "border-violet-500/20 bg-[#0d0a1a]/60 hover:border-violet-500/40"
+          : "border-slate-800 bg-slate-900/60 hover:border-slate-700"
+      }`}
+    >
       {/* Top Row */}
       <div className="flex items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-2 min-w-0">
@@ -108,14 +109,19 @@ export function ReturnCard({ item, onProcess }: ReturnCardProps) {
             <svg className="w-10 h-10 -rotate-90" viewBox="0 0 36 36">
               <circle cx="18" cy="18" r="14" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="3" />
               <circle
-                cx="18" cy="18" r="14" fill="none"
+                cx="18"
+                cy="18"
+                r="14"
+                fill="none"
                 stroke={score >= 80 ? "#10b981" : score >= 55 ? "#6366f1" : "#f43f5e"}
                 strokeWidth="3"
                 strokeDasharray={`${dash} ${circumference}`}
                 strokeLinecap="round"
               />
             </svg>
-            <span className="absolute inset-0 flex items-center justify-center text-[9px] font-black text-white">{score}</span>
+            <span className="absolute inset-0 flex items-center justify-center text-[9px] font-black text-white">
+              {score}
+            </span>
           </div>
         )}
         {isUnrouted && (
@@ -129,11 +135,17 @@ export function ReturnCard({ item, onProcess }: ReturnCardProps) {
             {(item.productId as any)?.name || "Product"}
           </h4>
           <p className="text-xs text-slate-500 mt-0.5 truncate italic">"{item.reason}"</p>
-          <div className="flex items-center gap-2 mt-1">
+          <div className="flex items-center gap-2 mt-1.5">
             <span className={`text-[10px] font-semibold ${getConditionColor()}`}>
-              {getConditionLabel()} · {item.conditionScore}/100
+              {getConditionLabel()}
             </span>
-            <span className="text-slate-700">·</span>
+            {/* Condition mini-bar */}
+            <div className="flex-1 h-1 rounded-full bg-slate-800 overflow-hidden max-w-[48px]">
+              <div
+                className={`h-full rounded-full ${conditionBarColor}`}
+                style={{ width: `${conditionScore}%` }}
+              />
+            </div>
             <span className="text-[10px] text-slate-500">
               {formatCurrency((item.productId as any)?.price || 0)}
             </span>
@@ -161,7 +173,9 @@ export function ReturnCard({ item, onProcess }: ReturnCardProps) {
           <div className="w-px h-6 bg-slate-800" />
           <div className="text-center">
             <span className="text-slate-500 block uppercase font-semibold">Dist</span>
-            <span className="font-bold text-sky-400">{Math.max(0, item.originalDistance - item.optimizedDistance)}km</span>
+            <span className="font-bold text-sky-400">
+              {Math.max(0, item.originalDistance - item.optimizedDistance)}km
+            </span>
           </div>
         </div>
       )}

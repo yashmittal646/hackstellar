@@ -2,6 +2,7 @@
 
 import { DashboardStats } from "../types";
 import { formatCurrency } from "../lib/utils";
+import { useEffect, useState, useRef } from "react";
 import {
   TrendingUp,
   Leaf,
@@ -28,6 +29,31 @@ export function KPICardSkeleton() {
   );
 }
 
+/** Animated counter hook — counts from 0 to target over ~800ms */
+function useCountUp(target: number, duration = 800) {
+  const [current, setCurrent] = useState(0);
+  const rafRef = useRef<number | null>(null);
+  const startRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (target === 0) { setCurrent(0); return; }
+    startRef.current = null;
+    const step = (ts: number) => {
+      if (!startRef.current) startRef.current = ts;
+      const elapsed = ts - startRef.current;
+      const pct = Math.min(elapsed / duration, 1);
+      // Ease-out cubic
+      const eased = 1 - Math.pow(1 - pct, 3);
+      setCurrent(Math.round(eased * target));
+      if (pct < 1) rafRef.current = requestAnimationFrame(step);
+    };
+    rafRef.current = requestAnimationFrame(step);
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+  }, [target, duration]);
+
+  return current;
+}
+
 export function KPICards({ stats }: KPICardsProps) {
   const directCount = stats.routingBreakdown["direct_to_customer"] || 0;
   const hubCount = stats.routingBreakdown["nearby_hub"] || 0;
@@ -38,10 +64,20 @@ export function KPICards({ stats }: KPICardsProps) {
       ? Math.round(((directCount + hubCount) / totalRouted) * 100)
       : 0;
 
+  // Animated counters
+  const animCost = useCountUp(Math.round(stats.savings.totalCostSaved));
+  const animIntercept = useCountUp(interceptRate);
+  const animCo2 = useCountUp(Math.round(stats.savings.totalCo2Saved * 10));
+  const animTime = useCountUp(Math.round(stats.savings.totalTimeSaved));
+  const animFraud = useCountUp(stats.totalFraudAlerts);
+  const animBypass = useCountUp(
+    totalRouted > 0 ? Math.round(((directCount + hubCount) / totalRouted) * 100) : 0
+  );
+
   const cards = [
     {
       title: "Logistics Cost Saved",
-      value: formatCurrency(stats.savings.totalCostSaved),
+      value: `₹${animCost.toLocaleString()}`,
       subtitle: `${stats.savings.distanceSaved.toLocaleString()} km transport avoided`,
       icon: TrendingUp,
       color: "text-emerald-400",
@@ -50,7 +86,7 @@ export function KPICards({ stats }: KPICardsProps) {
     },
     {
       title: "Interception Success Rate",
-      value: `${interceptRate}%`,
+      value: `${animIntercept}%`,
       subtitle: `${directCount} Direct Peer · ${hubCount} Hub Staged`,
       icon: RotateCcw,
       color: "text-indigo-400",
@@ -59,7 +95,7 @@ export function KPICards({ stats }: KPICardsProps) {
     },
     {
       title: "Carbon Offset (CO₂)",
-      value: `${stats.savings.totalCo2Saved.toFixed(1)} kg`,
+      value: `${(animCo2 / 10).toFixed(1)} kg`,
       subtitle: "Green logistics rerouting efficiency",
       icon: Leaf,
       color: "text-teal-400",
@@ -68,7 +104,7 @@ export function KPICards({ stats }: KPICardsProps) {
     },
     {
       title: "Turnaround Time Saved",
-      value: `${stats.savings.totalTimeSaved.toFixed(0)} hrs`,
+      value: `${animTime} hrs`,
       subtitle: "Faster restocking & second-life delivery",
       icon: Clock,
       color: "text-amber-400",
@@ -77,7 +113,7 @@ export function KPICards({ stats }: KPICardsProps) {
     },
     {
       title: "Fraud Blocked / Flagged",
-      value: stats.totalFraudAlerts.toString(),
+      value: animFraud.toString(),
       subtitle: `${stats.fraudBreakdown["high"] || 0} high risk sent to quarantine`,
       icon: ShieldAlert,
       color: "text-rose-400",
@@ -86,10 +122,7 @@ export function KPICards({ stats }: KPICardsProps) {
     },
     {
       title: "Warehouse Bypass Rate",
-      value:
-        totalRouted > 0
-          ? `${Math.round(((directCount + hubCount) / totalRouted) * 100)}%`
-          : "0%",
+      value: `${animBypass}%`,
       subtitle: `Only ${warehouseCount} of ${totalRouted} sent to main facility`,
       icon: Warehouse,
       color: "text-sky-400",

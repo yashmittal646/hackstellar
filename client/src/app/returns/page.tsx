@@ -255,6 +255,31 @@ export default function ReturnsFleetPage() {
               <X className="w-4 h-4" />
             </button>
           </div>
+          {/* Quick summary strip */}
+          <div className="grid grid-cols-3 gap-3 mb-4">
+            {[
+              {
+                label: "Pristine / Like New",
+                value: batchResults.filter((r) => ["PRISTINE", "LIKE_NEW"].includes(r.grade)).length,
+                color: "text-emerald-400", border: "border-emerald-500/20 bg-emerald-500/5",
+              },
+              {
+                label: "High Fraud Risk",
+                value: batchResults.filter((r) => r.risk === "HIGH").length,
+                color: "text-red-400", border: "border-red-500/20 bg-red-500/5",
+              },
+              {
+                label: "Direct Peer Routes",
+                value: batchResults.filter((r) => r.decision === "DIRECT_TO_PEER").length,
+                color: "text-violet-400", border: "border-violet-500/20 bg-violet-500/5",
+              },
+            ].map((s) => (
+              <div key={s.label} className={`rounded-xl border p-2.5 text-center ${s.border}`}>
+                <div className={`text-xl font-black ${s.color}`}>{s.value}</div>
+                <div className="text-[10px] text-slate-500 mt-0.5">{s.label}</div>
+              </div>
+            ))}
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>

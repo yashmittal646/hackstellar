@@ -435,22 +435,32 @@ export default function ReturnDetailPage() {
 
           <div className="space-y-3 pt-2">
             {[
-              { label: "Product Condition Factor (25%)", value: reasoning.conditionFactor, color: "bg-emerald-500" },
-              { label: "Nearby Local Demand (30%)", value: reasoning.demandFactor, color: "bg-indigo-500" },
-              { label: "Fraud Safety Inversion (20%)", value: reasoning.fraudFactor, color: "bg-teal-500" },
-              { label: "Geographic Proximity (15%)", value: reasoning.proximityFactor, color: "bg-sky-500" },
-              { label: "Time & Speed Optimization (10%)", value: reasoning.timeSavingsFactor, color: "bg-amber-500" },
-            ].map((f) => (
-              <div key={f.label}>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-slate-400">{f.label}</span>
-                  <span className="text-slate-200 font-mono">{(f.value * 100).toFixed(0)}%</span>
+              { label: "Product Condition Factor", weight: "25%", value: reasoning.conditionFactor, color: "bg-emerald-500", glow: "shadow-emerald-500/30" },
+              { label: "Nearby Local Demand", weight: "30%", value: reasoning.demandFactor, color: "bg-indigo-500", glow: "shadow-indigo-500/30" },
+              { label: "Fraud Safety Inversion", weight: "20%", value: reasoning.fraudFactor, color: "bg-teal-500", glow: "shadow-teal-500/30" },
+              { label: "Geographic Proximity", weight: "15%", value: reasoning.proximityFactor, color: "bg-sky-500", glow: "shadow-sky-500/30" },
+              { label: "Time & Speed Optimization", weight: "10%", value: reasoning.timeSavingsFactor, color: "bg-amber-500", glow: "shadow-amber-500/30" },
+            ].map((f) => {
+              const pct = Math.round(f.value * 100);
+              const scoreColor = pct >= 80 ? "text-emerald-400" : pct >= 55 ? "text-amber-400" : "text-red-400";
+              return (
+                <div key={f.label}>
+                  <div className="flex justify-between items-center text-xs mb-1.5">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-slate-300 font-medium">{f.label}</span>
+                      <span className="text-slate-600 font-mono text-[10px]">({f.weight})</span>
+                    </div>
+                    <span className={`font-mono font-bold ${scoreColor}`}>{pct}%</span>
+                  </div>
+                  <div className="h-2.5 rounded-full bg-slate-800/80 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-1000 ease-out ${f.color} shadow-lg ${f.glow}`}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
                 </div>
-                <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
-                  <div className={`h-full ${f.color} rounded-full transition-all duration-700`} style={{ width: `${f.value * 100}%` }} />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-400 mt-2">

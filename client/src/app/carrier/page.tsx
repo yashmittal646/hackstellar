@@ -311,22 +311,37 @@ export default function CarrierAppPage() {
                 )}
 
                 {stage === "delivered" && (
-                  <div className="flex-1 flex flex-col items-center justify-center text-center space-y-3 py-12 animate-in zoom-in-95 duration-200">
-                    <div className="h-16 w-16 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center">
-                      <CheckCircle2 className="h-8 w-8" />
+                  <div className="flex-1 flex flex-col items-center justify-center text-center space-y-4 py-12 animate-in zoom-in-95 duration-200">
+                    {/* Burst ring animation */}
+                    <div className="relative flex items-center justify-center">
+                      <div className="absolute h-24 w-24 rounded-full bg-emerald-500/10 animate-ping" />
+                      <div className="absolute h-20 w-20 rounded-full bg-emerald-500/15 animate-ping" style={{ animationDelay: "0.15s" }} />
+                      <div className="relative h-16 w-16 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 text-white border-2 border-emerald-400/50 flex items-center justify-center shadow-2xl shadow-emerald-500/40">
+                        <CheckCircle2 className="h-8 w-8" />
+                      </div>
                     </div>
-                    <div className="text-base font-black text-white">Return Cycle Intercepted!</div>
-                    <p className="text-xs text-slate-400 max-w-[240px]">
-                      Package successfully delivered to new recipient. Warehouse roundtrip eliminated completely.
-                    </p>
-                    <div className="text-xs font-mono text-emerald-400 font-bold">
-                      Saved {formatCurrency(selectedReturn?.costSaved || 1200)} • {selectedReturn?.co2Saved || 85}kg CO₂
+                    <div>
+                      <div className="text-base font-black text-white">Return Cycle Intercepted! 🎉</div>
+                      <p className="text-xs text-slate-400 max-w-[240px] mt-1">
+                        Package successfully delivered to new recipient. Warehouse roundtrip eliminated completely.
+                      </p>
+                    </div>
+                    {/* Impact strip */}
+                    <div className="grid grid-cols-2 gap-2 w-full text-center text-xs">
+                      <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-2.5">
+                        <div className="text-emerald-400 font-black text-sm">{formatCurrency(selectedReturn?.costSaved || 1200)}</div>
+                        <div className="text-emerald-500/60 text-[10px]">Cost Saved</div>
+                      </div>
+                      <div className="rounded-xl bg-teal-500/10 border border-teal-500/20 p-2.5">
+                        <div className="text-teal-400 font-black text-sm">{selectedReturn?.co2Saved || 85} kg</div>
+                        <div className="text-teal-500/60 text-[10px]">CO₂ Avoided</div>
+                      </div>
                     </div>
                     <button
                       onClick={() => setStage("pickup")}
-                      className="mt-4 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold"
+                      className="mt-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-colors"
                     >
-                      Process Next Pickup
+                      Process Next Pickup →
                     </button>
                   </div>
                 )}

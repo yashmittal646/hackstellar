@@ -137,6 +137,35 @@ export default function NewReturnPage() {
           </p>
         </div>
 
+        {/* AI Pipeline Explainer */}
+        {!dossier && !running && (
+          <div className="rounded-2xl border border-violet-500/15 bg-gradient-to-r from-violet-950/30 to-purple-950/20 p-4 flex items-center gap-4">
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {[
+                { icon: Eye, color: "text-blue-400", bg: "bg-blue-500/15", label: "Vision" },
+                { icon: ShieldAlert, color: "text-red-400", bg: "bg-red-500/15", label: "Fraud" },
+                { icon: Truck, color: "text-emerald-400", bg: "bg-emerald-500/15", label: "Route" },
+              ].map((a, i) => {
+                const AIcon = a.icon;
+                return (
+                  <div key={a.label} className="flex items-center gap-1">
+                    <div className={`w-8 h-8 rounded-xl ${a.bg} flex items-center justify-center`}>
+                      <AIcon className={`w-4 h-4 ${a.color}`} />
+                    </div>
+                    {i < 2 && <div className="w-3 h-px bg-white/15" />}
+                  </div>
+                );
+              })}
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-white/70">3-Agent Autonomous Pipeline</p>
+              <p className="text-[11px] text-white/35 mt-0.5">
+                VisionQualityAgent grades condition → FraudSentinel scores risk → LogisticsDispatcher finds optimal route
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Step 1: Select Order */}
         {!dossier && (
           <div className="space-y-6">
@@ -425,6 +454,13 @@ export default function NewReturnPage() {
                 className="flex-1 rounded-2xl border border-white/10 py-3.5 text-sm font-semibold text-white/70 hover:text-white hover:border-white/20 transition-colors"
               >
                 New Return
+              </button>
+              <button
+                onClick={() => router.push("/returns")}
+                className="flex-1 rounded-2xl bg-gradient-to-r from-indigo-600 to-emerald-600 hover:from-indigo-500 hover:to-emerald-500 py-3.5 text-sm font-bold text-white flex items-center justify-center gap-2 transition-all"
+              >
+                <Package className="w-4 h-4" />
+                View Fleet
               </button>
               <button
                 onClick={() => router.push("/agent-lab")}

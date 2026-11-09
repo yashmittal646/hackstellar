@@ -131,6 +131,25 @@ export default function DashboardPage() {
           <p className="text-sm md:text-base text-slate-400 max-w-2xl">
             Autonomous multi-factor rerouting engine. Intercepts returns in real time to eliminate unnecessary warehouse roundtrips and match nearby customer demand.
           </p>
+          {/* Live AI stats strip */}
+          {stats && (
+            <div className="flex flex-wrap items-center gap-4 pt-1 text-xs font-semibold">
+              <span className="flex items-center gap-1.5 text-violet-300">
+                <Bot className="h-3.5 w-3.5" />
+                {stats.totalReturns} Returns AI-Analyzed
+              </span>
+              <span className="text-slate-600">·</span>
+              <span className="flex items-center gap-1.5 text-emerald-300">
+                <TrendingDown className="h-3.5 w-3.5" />
+                ₹{Math.round(stats.savings.totalCostSaved).toLocaleString()} Saved
+              </span>
+              <span className="text-slate-600">·</span>
+              <span className="flex items-center gap-1.5 text-teal-300">
+                <Building2 className="h-3.5 w-3.5" />
+                {Math.round(stats.savings.totalCo2Saved * 10) / 10} kg CO₂ Offset
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-3 relative z-10">
@@ -280,12 +299,18 @@ export default function DashboardPage() {
             <p className="text-xs text-slate-400 max-w-md">
               Returns are diverted to pending orders within a 25 km radius or held in micro-fulfillment hubs, bypassing Delhi central warehouse.
             </p>
-            <div className="flex flex-wrap items-center justify-center gap-4 text-xs font-semibold pt-2 text-slate-300">
-              <span>📍 8 Regional Hubs</span>
-              <span>•</span>
-              <span>⚡ 25km Customer Intercept Radius</span>
-              <span>•</span>
-              <span>🌱 0.21 kg/km CO₂ Reduction</span>
+            {/* Live interception mini stats */}
+            <div className="grid grid-cols-3 gap-3 w-full max-w-sm mt-2">
+              {[
+                { label: "Hubs Online", value: "8", color: "text-indigo-400" },
+                { label: "Intercept Radius", value: "25 km", color: "text-emerald-400" },
+                { label: "CO₂/km Saved", value: "0.21 kg", color: "text-teal-400" },
+              ].map((s) => (
+                <div key={s.label} className="rounded-xl bg-slate-900/60 border border-slate-800 p-2.5 text-center">
+                  <div className={`text-sm font-black ${s.color}`}>{s.value}</div>
+                  <div className="text-[10px] text-slate-500 mt-0.5">{s.label}</div>
+                </div>
+              ))}
             </div>
           </div>
 

@@ -563,13 +563,21 @@ export default function ImpactPage() {
                   http://localhost:3000
                 </code>
               </p>
-              <Link
-                href="/agent-lab"
-                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-violet-700/30 transition-all hover:scale-105 hover:shadow-violet-700/50"
-              >
-                Open Agent Lab
-                <ExternalLink className="h-4 w-4" />
-              </Link>
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <Link
+                  href="/agent-lab"
+                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-violet-700/30 transition-all hover:scale-105 hover:shadow-violet-700/50"
+                >
+                  Open Agent Lab
+                  <ExternalLink className="h-4 w-4" />
+                </Link>
+                <button
+                  onClick={() => window.print()}
+                  className="inline-flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800/60 px-6 py-3 text-sm font-bold text-zinc-200 hover:bg-zinc-700 transition-all"
+                >
+                  🖨️ Export PDF
+                </button>
+              </div>
             </div>
           </div>
         </section>
