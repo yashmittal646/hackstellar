@@ -1,0 +1,14 @@
+{
+  "name": "hackstellar-ps16",
+  "version": "1.0.0",
+  "description": "Returns That Never Go Home — Intelligent E-Commerce Return Management System",
+  "scripts": {
+    "dev": "concurrently -n \"API,WEB\" -c \"blue,green\" \"npm --prefix server run dev\" \"npm --prefix client run dev\"",
+    "dev:server": "npm --prefix server run dev",
+    "dev:client": "npm --prefix client run dev",
+    "seed": "npm --prefix server run seed"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
