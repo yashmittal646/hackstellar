@@ -410,6 +410,7 @@ export default function AgentLabPage() {
 
             {/* 3 agent cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
               {/* Vision Agent */}
               <AgentCard
                 title="Vision Quality Agent"

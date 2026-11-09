@@ -23,6 +23,7 @@ export default function CarrierAppPage() {
   const [loading, setLoading] = useState(true);
   const [selectedReturn, setSelectedReturn] = useState<ReturnItem | null>(null);
   const [stage, setStage] = useState<"pickup" | "scanning" | "intercepted" | "delivered">("pickup");
+  const [scanCountdown, setScanCountdown] = useState(3);
 
   const loadData = async () => {
     try {
@@ -44,10 +45,20 @@ export default function CarrierAppPage() {
   }, []);
 
   const handleScan = () => {
+    setScanCountdown(3);
     setStage("scanning");
-    setTimeout(() => {
-      setStage("intercepted");
-    }, 1200);
+    // Countdown: 3 → 2 → 1 → AI processing → result
+    const tick = (n: number) => {
+      if (n > 0) {
+        setScanCountdown(n);
+        setTimeout(() => tick(n - 1), 900);
+      } else {
+        // 0 = "Analyzing..." phase then intercept
+        setScanCountdown(0);
+        setTimeout(() => setStage("intercepted"), 1400);
+      }
+    };
+    setTimeout(() => tick(2), 900);
   };
 
   const handleDeliver = async () => {
@@ -71,6 +82,7 @@ export default function CarrierAppPage() {
   const resetFlow = (ret: ReturnItem) => {
     setSelectedReturn(ret);
     setStage("pickup");
+    setScanCountdown(3);
   };
 
   const isPeer = selectedReturn?.routingDestination === "direct_to_customer";
@@ -202,12 +214,47 @@ export default function CarrierAppPage() {
                 )}
 
                 {stage === "scanning" && (
-                  <div className="flex-1 flex flex-col items-center justify-center space-y-3 py-16 animate-in fade-in">
-                    <div className="h-12 w-12 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin" />
-                    <div className="text-sm font-bold text-white">Consulting Spatial Routing Engine...</div>
-                    <div className="text-xs text-slate-400 text-center">
-                      Evaluating 25km demand matching & condition gate
+                  <div className="flex-1 flex flex-col items-center justify-center space-y-5 py-10 animate-in fade-in">
+                    {/* Scan laser animation */}
+                    <div className="relative w-32 h-32 flex items-center justify-center">
+                      {/* Pulsing rings */}
+                      <div className="absolute inset-0 rounded-full border-2 border-indigo-500/40 animate-ping" />
+                      <div className="absolute inset-4 rounded-full border-2 border-indigo-400/30 animate-ping" style={{ animationDelay: "0.3s" }} />
+                      {/* Inner circle with countdown */}
+                      <div className="relative z-10 h-20 w-20 rounded-full bg-gradient-to-br from-indigo-600 to-violet-700 flex items-center justify-center shadow-2xl shadow-indigo-500/50">
+                        {scanCountdown > 0 ? (
+                          <span className="text-4xl font-black text-white animate-in zoom-in-50 duration-300" key={scanCountdown}>
+                            {scanCountdown}
+                          </span>
+                        ) : (
+                          <Scan className="h-8 w-8 text-white animate-pulse" />
+                        )}
+                      </div>
                     </div>
+
+                    <div className="text-center space-y-1">
+                      <div className="text-sm font-black text-white">
+                        {scanCountdown > 0 ? "Hold barcode steady..." : "Consulting AI Routing Engine..."}
+                      </div>
+                      <div className="text-xs text-slate-400">
+                        {scanCountdown > 0
+                          ? `Scanning in ${scanCountdown}...`
+                          : "Evaluating 25km demand · condition gate · fraud check"}
+                      </div>
+                    </div>
+
+                    {/* Agent pipeline mini-status */}
+                    {scanCountdown === 0 && (
+                      <div className="w-full space-y-1.5 animate-in fade-in">
+                        {["VisionQualityAgent", "FraudSentinel", "LogisticsDispatcher"].map((agent, i) => (
+                          <div key={agent} className="flex items-center gap-2 p-2 rounded-lg bg-slate-900 border border-slate-800">
+                            <div className="h-2 w-2 rounded-full bg-indigo-400 animate-pulse" style={{ animationDelay: `${i * 0.2}s` }} />
+                            <span className="text-[10px] font-mono text-indigo-300">{agent}</span>
+                            <span className="ml-auto text-[10px] text-slate-500">processing...</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
 

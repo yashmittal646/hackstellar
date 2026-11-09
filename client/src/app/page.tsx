@@ -26,12 +26,17 @@ import {
 } from "lucide-react";
 
 // Mock live agent activity feed (auto-generated based on seeded returns)
-const AGENT_FEED = [
-  { agent: "VisionQualityAgent", product: "iPhone 15 Pro Max", result: "PRISTINE · 94/100", badge: "text-emerald-400 bg-emerald-500/10", icon: Eye, time: "12s ago" },
+const ALL_FEED_EVENTS = [
+  { agent: "VisionQualityAgent", product: "iPhone 15 Pro Max", result: "PRISTINE · 97/100", badge: "text-emerald-400 bg-emerald-500/10", icon: Eye, time: "12s ago" },
   { agent: "FraudSentinel", product: "Samsung Galaxy S24", result: "HIGH RISK · Score 88/100", badge: "text-red-400 bg-red-500/10", icon: ShieldAlert, time: "1m ago" },
   { agent: "LogisticsDispatcher", product: "Sony WH-1000XM5", result: "→ Pune Micro Hub · ₹1,200 saved", badge: "text-blue-400 bg-blue-500/10", icon: Truck, time: "2m ago" },
-  { agent: "VisionQualityAgent", product: "Zara Blazer", result: "GOOD · 78/100 · Tags intact", badge: "text-blue-400 bg-blue-500/10", icon: Eye, time: "4m ago" },
+  { agent: "VisionQualityAgent", product: "Zara Blazer", result: "LIKE_NEW · 78/100 · Tags intact", badge: "text-blue-400 bg-blue-500/10", icon: Eye, time: "4m ago" },
   { agent: "LogisticsDispatcher", product: "MacBook Air M3", result: "→ Direct Peer · ₹4,500 saved", badge: "text-emerald-400 bg-emerald-500/10", icon: Truck, time: "7m ago" },
+  { agent: "FraudSentinel", product: "Nike Air Max 270", result: "LOW RISK · Score 12/100", badge: "text-emerald-400 bg-emerald-500/10", icon: ShieldAlert, time: "11m ago" },
+  { agent: "VisionQualityAgent", product: "Boat Airdopes 141", result: "DEFECTIVE · 23/100 · Cracked", badge: "text-red-400 bg-red-500/10", icon: Eye, time: "14m ago" },
+  { agent: "LogisticsDispatcher", product: "Levi's 511 Jeans", result: "→ Chennai Hub · ₹680 saved", badge: "text-blue-400 bg-blue-500/10", icon: Truck, time: "18m ago" },
+  { agent: "VisionQualityAgent", product: "Apple Watch Series 9", result: "REFURBISHABLE · 54/100", badge: "text-yellow-400 bg-yellow-500/10", icon: Eye, time: "22m ago" },
+  { agent: "FraudSentinel", product: "OnePlus 12 Pro", result: "MEDIUM RISK · Score 61/100", badge: "text-yellow-400 bg-yellow-500/10", icon: ShieldAlert, time: "27m ago" },
 ];
 
 export default function DashboardPage() {
@@ -39,6 +44,8 @@ export default function DashboardPage() {
   const [recentReturns, setRecentReturns] = useState<ReturnItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [feedOffset, setFeedOffset] = useState(0);
+  const [newEventPulse, setNewEventPulse] = useState(false);
 
   const loadData = async () => {
     try {
@@ -55,6 +62,18 @@ export default function DashboardPage() {
 
   useEffect(() => {
     loadData();
+    // Auto-refresh data every 30s to look "live"
+    const dataInterval = setInterval(() => loadData(), 30000);
+    // Cycle live feed events every 8s for drama
+    const feedInterval = setInterval(() => {
+      setFeedOffset((prev) => (prev + 1) % (ALL_FEED_EVENTS.length - 4));
+      setNewEventPulse(true);
+      setTimeout(() => setNewEventPulse(false), 1200);
+    }, 8000);
+    return () => {
+      clearInterval(dataInterval);
+      clearInterval(feedInterval);
+    };
   }, []);
 
   const handleProcessRouting = async (id: string) => {
@@ -176,10 +195,11 @@ export default function DashboardPage() {
           </Link>
         </div>
         <div className="space-y-2">
-          {AGENT_FEED.map((entry, i) => {
+          {ALL_FEED_EVENTS.slice(feedOffset, feedOffset + 5).map((entry, i) => {
             const Icon = entry.icon;
+            const isNewest = i === 0 && newEventPulse;
             return (
-              <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.04] hover:border-white/10 transition-colors">
+              <div key={`${feedOffset}-${i}`} className={`flex items-center gap-3 p-3 rounded-xl border transition-all duration-500 ${isNewest ? "bg-violet-500/10 border-violet-500/30 scale-[1.01]" : "bg-white/[0.02] border-white/[0.04] hover:border-white/10"}`}>
                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${entry.badge}`}>
                   <Icon className="w-4 h-4" />
                 </div>
