@@ -8,7 +8,9 @@ import {
   RotateCcw, 
   ShieldAlert, 
   PlusCircle,
-  Truck
+  Truck,
+  Navigation,
+  Sparkles,
 } from "lucide-react";
 
 export function Navbar() {
@@ -16,10 +18,12 @@ export function Navbar() {
 
   const navItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/map", label: "Live Intercept Map", icon: Compass },
+    { href: "/agent-lab", label: "Agent Lab", icon: Sparkles, highlight: true },
+    { href: "/map", label: "Live Map", icon: Compass },
     { href: "/returns", label: "Returns Fleet", icon: RotateCcw },
-    { href: "/returns/new", label: "Simulate Return", icon: PlusCircle },
+    { href: "/returns/new", label: "New Return", icon: PlusCircle },
     { href: "/fraud", label: "Fraud Radar", icon: ShieldAlert },
+    { href: "/carrier", label: "Driver App", icon: Navigation },
   ];
 
   return (
@@ -49,7 +53,9 @@ export function Navbar() {
                 href={item.href}
                 className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-all ${
                   isActive
-                    ? "bg-primary text-primary-foreground shadow-sm"
+                    ? (item as any).highlight ? "bg-gradient-to-r from-violet-600 to-purple-700 text-white shadow-sm shadow-violet-500/30" : "bg-primary text-primary-foreground shadow-sm"
+                    : (item as any).highlight
+                    ? "bg-violet-500/10 text-violet-400 hover:bg-violet-500/20 border border-violet-500/20"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/70"
                 }`}
               >
@@ -70,4 +76,3 @@ export function Navbar() {
     </header>
   );
 }
-

@@ -78,3 +78,4 @@ Highlight our multi-signal fraud radar:
 
 #### Q4: "Is this technically feasible today?"
 > **Answer**: Yes! Delivery aggregators like Delhivery, Shadowfax, and Bluedart already have hyper-local delivery fleets in every metro. OrbitReturn provides the missing intelligence layer on top of existing logistics APIs.
+

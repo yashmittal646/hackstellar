@@ -2,329 +2,440 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { fetchPendingOrders, processReturnRouting } from "../../../lib/api";
+import { fetchPendingOrders, runAgentInspect } from "../../../lib/api";
 import { Order } from "../../../types";
-import { formatCurrency } from "../../../lib/utils";
-import { 
-  Sparkles, 
-  UploadCloud, 
-  CheckCircle, 
-  ShieldCheck, 
-  Truck, 
+import {
+  Sparkles,
+  Eye,
+  ShieldAlert,
+  Truck,
+  CheckCircle2,
   ArrowRight,
   RotateCcw,
-  AlertCircle,
-  Scan,
-  Box,
-  Eye,
-  CheckCircle2
+  Package,
+  Zap,
+  Lock,
+  Unlock,
+  AlertTriangle,
+  Bot,
+  ChevronDown,
 } from "lucide-react";
 
-const REASONS = [
-  { category: "changed_mind", label: "Changed my mind / No longer needed", expected: "Pristine condition — High chance of Direct Peer Reroute" },
-  { category: "size_issue", label: "Size or fit issue", expected: "Unopened / Like new — High chance of Peer or Hub Staging" },
-  { category: "not_as_described", label: "Item looks different from description", expected: "Good condition — Evaluated for Hub or Resale" },
-  { category: "damaged", label: "Damaged during transit / dented box", expected: "Defective score — Direct to Central Warehouse" },
-  { category: "defective", label: "Product not turning on / missing parts", expected: "Defective — Mandatory Warehouse Inspection" },
+type AgentStep = { agent: string; step: string; thought: string; timestamp: string };
+
+const QUICK_REASONS = [
+  { label: "Changed my mind", value: "Changed my mind — item is unopened, sealed box, never used" },
+  { label: "Wrong size/fit", value: "Wrong size ordered, tags intact, never worn or used" },
+  { label: "Damaged in transit", value: "Package arrived damaged, dented box, item is broken" },
+  { label: "Not as described", value: "Product looks different from listing photos" },
+  { label: "Defective product", value: "Product is not working, dead on arrival, missing parts" },
 ];
 
-export default function NewReturnSimulationPage() {
+function getGradeColor(grade: string) {
+  if (grade === "PRISTINE") return "text-emerald-400";
+  if (grade === "LIKE_NEW") return "text-blue-400";
+  if (grade === "REFURBISHABLE") return "text-amber-400";
+  if (grade === "TAMPERED") return "text-orange-400";
+  return "text-red-400";
+}
+
+function getRiskBadge(risk: string) {
+  if (risk === "LOW") return "bg-emerald-500/15 text-emerald-400 border-emerald-500/25";
+  if (risk === "MEDIUM") return "bg-amber-500/15 text-amber-400 border-amber-500/25";
+  return "bg-red-500/15 text-red-400 border-red-500/25";
+}
+
+export default function NewReturnPage() {
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedOrderId, setSelectedOrderId] = useState<string>("");
-  const [category, setCategory] = useState<string>("changed_mind");
-  const [reasonText, setReasonText] = useState<string>("Customer decided to return item.");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [loadingOrders, setLoadingOrders] = useState(true);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [reason, setReason] = useState("");
+  const [running, setRunning] = useState(false);
+  const [dossier, setDossier] = useState<any>(null);
+  const [cotReveal, setCotReveal] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const [currentAgentIdx, setCurrentAgentIdx] = useState(0);
+
+  const AGENTS = ["VisionQualityAgent", "FraudSentinel", "LogisticsDispatcher"];
 
   useEffect(() => {
-    async function load() {
-      try {
-        const ords = await fetchPendingOrders();
+    fetchPendingOrders()
+      .then((ords) => {
         setOrders(ords);
-        if (ords.length > 0) setSelectedOrderId(ords[0]._id);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
+        if (ords.length > 0) setSelectedOrder(ords[0]);
+      })
+      .finally(() => setLoadingOrders(false));
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedOrderId) return;
-    setIsSubmitting(true);
-    setResult(null);
+  async function submitReturn() {
+    if (!selectedOrder || !reason.trim()) return;
+    setRunning(true);
+    setDossier(null);
+    setError(null);
+    setCotReveal(0);
+    setCurrentAgentIdx(0);
 
-    const selectedOrder = orders.find((o) => o._id === selectedOrderId);
-    if (!selectedOrder) return;
+    // Simulate agent progression animation
+    let agentTimer = 0;
+    const agentInterval = setInterval(() => {
+      agentTimer++;
+      setCurrentAgentIdx(Math.min(agentTimer, AGENTS.length - 1));
+    }, 1200);
 
     try {
-      const formData = new FormData();
-      formData.append("originalOrderId", selectedOrder._id);
-      formData.append("userId", typeof selectedOrder.userId === "object" ? selectedOrder.userId._id : selectedOrder.userId);
-      formData.append("productId", typeof selectedOrder.productId === "object" ? selectedOrder.productId._id : selectedOrder.productId);
-      formData.append("reason", reasonText);
-      formData.append("reasonCategory", category);
-      formData.append("pickupAddress[street]", selectedOrder.deliveryAddress.street);
-      formData.append("pickupAddress[city]", selectedOrder.deliveryAddress.city);
-      formData.append("pickupAddress[state]", selectedOrder.deliveryAddress.state);
-      formData.append("pickupAddress[pincode]", selectedOrder.deliveryAddress.pincode);
-      formData.append("pickupAddress[coordinates][lat]", selectedOrder.deliveryAddress.coordinates.lat.toString());
-      formData.append("pickupAddress[coordinates][lng]", selectedOrder.deliveryAddress.coordinates.lng.toString());
-
-      // 1. Create return
-      const res = await fetch("http://localhost:5000/api/returns", {
-        method: "POST",
-        body: formData,
+      const product = typeof selectedOrder.productId === "object" ? (selectedOrder.productId as any) : null;
+      const productName = product?.name || "Product";
+      const category = product?.category || "Electronics";
+      const price = product?.price || selectedOrder.totalAmount || 0;
+      const result = await runAgentInspect({
+        productName,
+        category,
+        price,
+        claimedReason: reason,
+        userId: (selectedOrder.userId as any)?._id?.toString() || selectedOrder.userId?.toString() || "demo_user",
+        pickupCoords: { lat: 28.6139, lng: 77.209 },
+        productWeight: 0.5,
       });
-      const data = await res.json();
-      const returnDoc = data.data;
-
-      // 2. Trigger automatic AI routing
-      const routingRes = await processReturnRouting(returnDoc._id);
-      setResult(routingRes.data);
-    } catch (err) {
-      alert("Failed to simulate return");
-      console.error(err);
+      clearInterval(agentInterval);
+      setDossier(result);
+      let i = 0;
+      const cot = result.unifiedChainOfThought || [];
+      const cotInterval = setInterval(() => {
+        i++;
+        setCotReveal(i);
+        if (i >= cot.length) clearInterval(cotInterval);
+      }, 300);
+    } catch (err: any) {
+      clearInterval(agentInterval);
+      setError(err.message || "Agent pipeline failed");
     } finally {
-      setIsSubmitting(false);
+      setRunning(false);
     }
-  };
+  }
 
-  const selectedOrder = orders.find((o) => o._id === selectedOrderId);
+  const cot: AgentStep[] = dossier?.unifiedChainOfThought || [];
 
   return (
-    <div className="container mx-auto max-w-5xl px-4 sm:px-6 py-8 space-y-8">
-      <div>
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 mb-2">
-          <Sparkles className="h-3.5 w-3.5" /> Interactive Demonstration
+    <div className="min-h-screen bg-[#060a0f] text-white">
+      <div className="max-w-3xl mx-auto px-6 py-10 space-y-8">
+        {/* Header */}
+        <div>
+          <div className="flex items-center gap-2 text-sm text-white/40 mb-2">
+            <span
+              className="hover:text-white/70 cursor-pointer"
+              onClick={() => router.push("/returns")}
+            >
+              Returns
+            </span>
+            <ChevronDown className="w-3 h-3 -rotate-90" />
+            <span>New Return</span>
+          </div>
+          <h1 className="text-2xl font-bold text-white">Initiate Return</h1>
+          <p className="text-white/40 text-sm mt-1">
+            Our AI agents will automatically inspect quality, detect fraud, and find the optimal route.
+          </p>
         </div>
-        <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">
-          Simulate Return & Autonomous Interception
-        </h1>
-        <p className="text-xs md:text-sm text-slate-400 mt-1">
-          Pick an order and return conditions to watch the multi-factor scoring engine re-route the product away from the warehouse.
-        </p>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Form Column */}
-        <div className="lg:col-span-7 rounded-3xl border border-slate-800 bg-slate-900/60 p-6 space-y-6">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Order Select */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-                Select Test Order & Product
+        {/* Step 1: Select Order */}
+        {!dossier && (
+          <div className="space-y-6">
+            <div className="rounded-2xl border border-white/8 bg-[#0d1117] p-5">
+              <label className="block text-sm font-semibold text-white mb-3">
+                <Package className="w-4 h-4 inline mr-1.5 text-white/50" />
+                Select Order to Return
               </label>
-              {loading ? (
-                <div className="text-xs text-slate-500">Loading demo orders...</div>
+              {loadingOrders ? (
+                <div className="h-12 bg-white/5 rounded-xl animate-pulse" />
               ) : (
-                <select
-                  value={selectedOrderId}
-                  onChange={(e) => setSelectedOrderId(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-white focus:outline-none focus:border-indigo-500"
-                >
-                  {orders.map((ord) => (
-                    <option key={ord._id} value={ord._id}>
-                      {ord.orderId} — {typeof ord.productId === "object" ? ord.productId.name : "Product"} (
-                      {ord.deliveryAddress.city})
-                    </option>
+                <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                  {orders.map((o) => (
+                    <div
+                      key={o._id}
+                      onClick={() => setSelectedOrder(o)}
+                      className={`flex items-center justify-between p-3.5 rounded-xl border cursor-pointer transition-all hover:border-white/20 ${
+                        selectedOrder?._id === o._id
+                          ? "border-violet-500/50 bg-violet-500/5"
+                          : "border-white/8 bg-white/2"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                            selectedOrder?._id === o._id ? "bg-violet-500/20" : "bg-white/5"
+                          }`}
+                        >
+                          <Package className="w-4 h-4 text-white/60" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-white">{(o.productId as any)?.name || o.orderId}</p>
+                          <p className="text-xs text-white/40">
+                            {(o.productId as any)?.category || "Product"} · ₹{((o.productId as any)?.price || o.totalAmount)?.toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                      {selectedOrder?._id === o._id && (
+                        <CheckCircle2 className="w-4 h-4 text-violet-400" />
+                      )}
+                    </div>
                   ))}
-                </select>
+                </div>
               )}
             </div>
 
-            {/* Category Select */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-                Return Reason Category
-              </label>
-              <div className="grid grid-cols-1 gap-2">
-                {REASONS.map((r) => (
-                  <label
-                    key={r.category}
-                    className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
-                      category === r.category
-                        ? "bg-indigo-600/10 border-indigo-500/40 text-white"
-                        : "bg-slate-950/60 border-slate-800 text-slate-300 hover:border-slate-700"
+            {/* Step 2: Reason */}
+            <div className="rounded-2xl border border-white/8 bg-[#0d1117] p-5">
+              <label className="block text-sm font-semibold text-white mb-3">Return Reason</label>
+              <div className="flex flex-wrap gap-2 mb-3">
+                {QUICK_REASONS.map((r) => (
+                  <button
+                    key={r.label}
+                    onClick={() => setReason(r.value)}
+                    className={`text-xs px-3 py-1.5 rounded-full border transition-all ${
+                      reason === r.value
+                        ? "bg-violet-500/20 border-violet-500/50 text-white"
+                        : "bg-white/5 border-white/10 text-white/50 hover:text-white hover:border-white/20"
                     }`}
                   >
-                    <input
-                      type="radio"
-                      name="reasonCategory"
-                      value={r.category}
-                      checked={category === r.category}
-                      onChange={() => setCategory(r.category)}
-                      className="mt-1 accent-indigo-500"
-                    />
-                    <div>
-                      <div className="text-xs font-bold">{r.label}</div>
-                      <div className="text-[11px] text-slate-400 mt-0.5">{r.expected}</div>
-                    </div>
-                  </label>
+                    {r.label}
+                  </button>
                 ))}
               </div>
-            </div>
-
-            {/* Reason Text */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-                Customer Reason Notes
-              </label>
               <textarea
-                value={reasonText}
-                onChange={(e) => setReasonText(e.target.value)}
-                rows={2}
-                className="w-full px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-indigo-500"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-violet-500/60 resize-none"
+                rows={3}
+                placeholder="Describe the return reason (or click a quick reason above)…"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
               />
             </div>
 
-            {/* Simulated Image Upload */}
-            <div className="p-4 rounded-2xl border border-dashed border-slate-800 bg-slate-950/50 flex flex-col items-center justify-center text-center gap-2">
-              <Scan className="h-6 w-6 text-indigo-400 animate-pulse" />
-              <div className="text-xs font-semibold text-slate-300">
-                AI Computer Vision Inspection
+            {error && (
+              <div className="rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-400">
+                {error}
               </div>
-              <p className="text-[11px] text-slate-500">
-                Visual analysis examines packaging integrity, barcode presence, factory seal, and surface wear.
-              </p>
-            </div>
+            )}
 
+            {/* Submit */}
             <button
-              type="submit"
-              disabled={isSubmitting || !selectedOrderId}
-              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-emerald-600 hover:from-indigo-500 hover:to-emerald-500 text-white font-bold text-sm shadow-xl shadow-indigo-600/25 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              onClick={submitReturn}
+              disabled={running || !selectedOrder || !reason.trim()}
+              className="w-full bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-500 hover:to-purple-600 disabled:opacity-40 disabled:cursor-not-allowed rounded-2xl py-4 text-base font-bold text-white flex items-center justify-center gap-3 transition-all"
             >
-              {isSubmitting ? (
+              {running ? (
                 <>
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  Analyzing Condition, Fraud & Nearby Orders...
+                  <RotateCcw className="w-5 h-5 animate-spin" />
+                  Agents Analyzing…
                 </>
               ) : (
                 <>
-                  <Sparkles className="h-4 w-4" /> Run Autonomous Routing Interception
+                  <Sparkles className="w-5 h-5" />
+                  Analyze with AI Agents
+                  <ArrowRight className="w-4 h-4" />
                 </>
               )}
             </button>
-          </form>
-        </div>
+          </div>
+        )}
 
-        {/* Results / Telemetry Column */}
-        <div className="lg:col-span-5 space-y-6">
-          {result ? (
-            <div className="rounded-3xl border border-emerald-500/40 bg-emerald-950/20 p-6 space-y-5 shadow-2xl animate-in fade-in zoom-in duration-300">
-              <div className="flex items-center justify-between">
-                <span className="flex items-center gap-1.5 text-emerald-400 font-bold text-xs uppercase tracking-wider">
-                  <CheckCircle className="h-4 w-4" /> Interception Complete
-                </span>
-                <span className="font-mono text-xs font-bold text-slate-400">{result.return.returnId}</span>
+        {/* Running: agent pipeline animation */}
+        {running && (
+          <div className="rounded-2xl border border-violet-500/20 bg-violet-500/5 p-8">
+            <p className="text-center text-white/60 text-sm mb-6">
+              Running 3-agent autonomous pipeline for{" "}
+              <span className="text-white font-semibold">{(selectedOrder?.productId as any)?.name || selectedOrder?.orderId}</span>
+            </p>
+            <div className="flex items-center justify-center gap-2">
+              {AGENTS.map((name, i) => {
+                const icons = [
+                  <Eye key="eye" className="w-5 h-5" />,
+                  <ShieldAlert key="shield" className="w-5 h-5" />,
+                  <Truck key="truck" className="w-5 h-5" />,
+                ];
+                const colors = ["text-blue-400", "text-red-400", "text-emerald-400"];
+                const bgColors = ["bg-blue-500/20", "bg-red-500/20", "bg-emerald-500/20"];
+                const done = i < currentAgentIdx;
+                const active = i === currentAgentIdx;
+                return (
+                  <div key={name} className="flex items-center gap-2">
+                    <div
+                      className={`w-12 h-12 rounded-2xl border flex items-center justify-center transition-all duration-500 ${
+                        done
+                          ? "bg-emerald-500/20 border-emerald-500/30 scale-90"
+                          : active
+                          ? `${bgColors[i]} border-white/20 scale-110 shadow-lg`
+                          : "bg-white/5 border-white/10 scale-90 opacity-40"
+                      }`}
+                    >
+                      {done ? (
+                        <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                      ) : (
+                        <div className={`${colors[i]} ${active ? "animate-pulse" : ""}`}>{icons[i]}</div>
+                      )}
+                    </div>
+                    {i < AGENTS.length - 1 && (
+                      <div
+                        className={`w-8 h-px transition-colors duration-500 ${done ? "bg-emerald-500/50" : "bg-white/10"}`}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <div className="text-center mt-4 text-xs text-white/40">
+              {AGENTS[currentAgentIdx]} running…
+            </div>
+          </div>
+        )}
+
+        {/* Results */}
+        {dossier && !running && (
+          <div className="space-y-5">
+            {/* Summary */}
+            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5">
+              <div className="flex items-center gap-2 mb-2">
+                <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                <span className="font-semibold text-emerald-400">Analysis Complete</span>
               </div>
+              <p className="text-sm text-white/70 leading-relaxed">{dossier.orchestratorSummary}</p>
+            </div>
 
-              <div>
-                <span className="text-[10px] text-slate-400 uppercase font-semibold">Assigned Route</span>
-                <div className="text-2xl font-black text-white mt-0.5">
-                  {result.routingResult.destination === "direct_to_customer"
-                    ? "🚀 Direct Peer Match"
-                    : result.routingResult.destination === "nearby_hub"
-                    ? "📦 Regional Hub Staging"
-                    : "🏭 Central Warehouse"}
+            {/* Score cards */}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="rounded-2xl border border-white/8 bg-[#0d1117] p-4 text-center">
+                <div className="w-8 h-8 rounded-xl bg-blue-500/15 flex items-center justify-center mx-auto mb-2">
+                  <Eye className="w-4 h-4 text-blue-400" />
+                </div>
+                <div className={`text-xl font-black ${getGradeColor(dossier.visionAgent?.qualityGrade)}`}>
+                  {dossier.visionAgent?.qualityGrade}
+                </div>
+                <div className="text-xs text-white/40 mt-0.5">Quality Grade</div>
+                <div className="text-sm font-semibold text-white/70 mt-1">
+                  {dossier.visionAgent?.overallQualityScore}/100
                 </div>
               </div>
+              <div className="rounded-2xl border border-white/8 bg-[#0d1117] p-4 text-center">
+                <div className="w-8 h-8 rounded-xl bg-red-500/15 flex items-center justify-center mx-auto mb-2">
+                  <ShieldAlert className="w-4 h-4 text-red-400" />
+                </div>
+                <div
+                  className={`text-xl font-black px-2 py-0.5 rounded-lg inline-block border ${getRiskBadge(
+                    dossier.fraudSentinel?.fraudRisk
+                  )}`}
+                >
+                  {dossier.fraudSentinel?.fraudRisk}
+                </div>
+                <div className="text-xs text-white/40 mt-1.5">Fraud Risk</div>
+                <div className="text-sm font-semibold text-white/70 mt-1">
+                  Score: {dossier.fraudSentinel?.riskScore}/100
+                </div>
+              </div>
+              <div className="rounded-2xl border border-white/8 bg-[#0d1117] p-4 text-center">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/15 flex items-center justify-center mx-auto mb-2">
+                  <Truck className="w-4 h-4 text-emerald-400" />
+                </div>
+                <div className="text-sm font-black text-white leading-tight">
+                  {dossier.dispatcher?.assignedDestination?.name?.split(" ").slice(0, 2).join(" ")}
+                </div>
+                <div className="text-xs text-white/40 mt-0.5">Routed To</div>
+                <div className="text-sm font-semibold text-emerald-400 mt-1">
+                  ₹{dossier.dispatcher?.savings?.costSavedINR?.toLocaleString()} saved
+                </div>
+              </div>
+            </div>
 
-              {/* Computer Vision Telemetry */}
-              {result.conditionResult?.telemetry && (
-                <div className="rounded-2xl bg-slate-950/80 p-3.5 border border-slate-800 space-y-2">
-                  <span className="text-[10px] text-indigo-400 uppercase font-bold tracking-wider flex items-center gap-1.5">
-                    <Eye className="h-3 w-3" /> CV Visual Telemetry
+            {/* Seal + defects */}
+            <div className="rounded-2xl border border-white/8 bg-[#0d1117] p-4 flex flex-wrap gap-4">
+              <div className="flex items-center gap-2">
+                {dossier.visionAgent?.sealIntegrity?.status === "INTACT" ? (
+                  <Lock className="w-4 h-4 text-emerald-400" />
+                ) : (
+                  <Unlock className="w-4 h-4 text-red-400" />
+                )}
+                <span className="text-sm text-white/70">
+                  Seal:{" "}
+                  <span
+                    className={
+                      dossier.visionAgent?.sealIntegrity?.status === "INTACT"
+                        ? "text-emerald-400 font-semibold"
+                        : "text-red-400 font-semibold"
+                    }
+                  >
+                    {dossier.visionAgent?.sealIntegrity?.status}
                   </span>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div>
-                      <span className="text-slate-400 text-[10px] block">Box Packaging</span>
-                      <span className="font-semibold text-slate-200">
-                        {result.conditionResult.telemetry.packagingIntegrity}% Intact
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 text-[10px] block">Factory Seal</span>
-                      <span className={`font-semibold ${
-                        result.conditionResult.telemetry.sealAuthenticity === "VERIFIED"
-                          ? "text-emerald-400"
-                          : "text-amber-400"
-                      }`}>
-                        {result.conditionResult.telemetry.sealAuthenticity}
-                      </span>
-                    </div>
-                  </div>
+                </span>
+              </div>
+              {dossier.visionAgent?.detectedDefects?.length > 0 && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <AlertTriangle className="w-4 h-4 text-amber-400" />
+                  {dossier.visionAgent.detectedDefects.map((d: any, i: number) => (
+                    <span
+                      key={i}
+                      className="text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                    >
+                      {d.label}
+                    </span>
+                  ))}
                 </div>
               )}
+              <div className="flex items-center gap-1 ml-auto">
+                <Bot className="w-3.5 h-3.5 text-violet-400" />
+                <span className="text-xs text-white/40">AI Analyzed</span>
+              </div>
+            </div>
 
-              {/* Closed-loop Order Update notification */}
-              {result.routingResult.destination === "direct_to_customer" && (
-                <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-300 space-y-1">
-                  <div className="font-bold flex items-center gap-1.5">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                    Closed-Loop Fulfillment Complete!
-                  </div>
-                  <p className="text-[11px] text-emerald-200/80">
-                    A pending order has been automatically matched and marked as <strong>SHIPPED</strong> without waiting for warehouse restocking.
-                  </p>
-                </div>
-              )}
-
-              {/* Savings Breakdown */}
-              <div className="space-y-2 text-xs border-t border-slate-800 pt-3">
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Logistics Cost Saved:</span>
-                  <span className="font-bold text-emerald-400">{formatCurrency(result.routingResult.costSaved)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">CO₂ Avoided:</span>
-                  <span className="font-bold text-teal-400">{result.routingResult.co2Saved} kg</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Delivery Time Saved:</span>
-                  <span className="font-bold text-amber-400">{result.routingResult.timeSaved} hours</span>
+            {/* Chain of Thought */}
+            {cotReveal > 0 && (
+              <div className="rounded-2xl border border-white/8 bg-[#0d1117] p-4">
+                <p className="text-xs text-white/40 font-medium uppercase tracking-wider mb-3">
+                  Agent Reasoning Chain
+                </p>
+                <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                  {cot.slice(0, cotReveal).map((s, i) => {
+                    const colors: Record<string, string> = {
+                      MultiAgentOrchestrator: "bg-purple-500",
+                      VisionQualityAgent: "bg-blue-500",
+                      FraudSentinelAgent: "bg-red-500",
+                      LogisticsDispatcherAgent: "bg-emerald-500",
+                    };
+                    return (
+                      <div key={i} className="flex gap-2 text-xs">
+                        <div
+                          className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${
+                            colors[s.agent] || "bg-slate-500"
+                          }`}
+                        />
+                        <p className="text-white/60 leading-relaxed">{s.thought}</p>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
+            )}
 
+            {/* Actions */}
+            <div className="flex gap-3">
               <button
-                onClick={() => router.push(`/returns/${result.return._id}`)}
-                className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-all flex items-center justify-center gap-1.5"
+                onClick={() => {
+                  setDossier(null);
+                  setReason("");
+                  setCotReveal(0);
+                  setCurrentAgentIdx(0);
+                }}
+                className="flex-1 rounded-2xl border border-white/10 py-3.5 text-sm font-semibold text-white/70 hover:text-white hover:border-white/20 transition-colors"
               >
-                Inspect Routing Breakdown <ArrowRight className="h-3 w-3" />
+                New Return
+              </button>
+              <button
+                onClick={() => router.push("/agent-lab")}
+                className="flex-1 rounded-2xl bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-500 hover:to-purple-600 py-3.5 text-sm font-bold text-white flex items-center justify-center gap-2 transition-all"
+              >
+                <Sparkles className="w-4 h-4" />
+                Full Agent Lab
               </button>
             </div>
-          ) : (
-            <div className="rounded-3xl border border-slate-800 bg-slate-900/60 p-6 space-y-4">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-indigo-400" />
-                Interception Architecture
-              </h3>
-              <ul className="text-xs text-slate-400 space-y-3">
-                <li className="flex items-start gap-2.5">
-                  <div className="p-1 rounded bg-indigo-500/10 text-indigo-400 text-xs font-mono font-bold">01</div>
-                  <span><strong>AI Visual Assessment:</strong> Image metadata & visual defect checks determine if item is resalable immediately.</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <div className="p-1 rounded bg-indigo-500/10 text-indigo-400 text-xs font-mono font-bold">02</div>
-                  <span><strong>Fraud Scoring:</strong> 6 behavioral signals calculate risk score. High risk items are quarantined to warehouse.</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <div className="p-1 rounded bg-indigo-500/10 text-indigo-400 text-xs font-mono font-bold">03</div>
-                  <span><strong>Demand Matching:</strong> MongoDB geospatial index finds pending orders for the same SKU within 25km.</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <div className="p-1 rounded bg-indigo-500/10 text-indigo-400 text-xs font-mono font-bold">04</div>
-                  <span><strong>Closed-Loop Reroute:</strong> Diverted directly to customer or regional staging hub.</span>
-                </li>
-              </ul>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

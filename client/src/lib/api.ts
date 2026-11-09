@@ -76,3 +76,40 @@ export async function createReturnRequest(formData: FormData): Promise<ReturnIte
   const data = await res.json();
   return data.data;
 }
+
+export async function runAgentInspect(payload: {
+  productName?: string;
+  category?: string;
+  price?: number;
+  claimedReason?: string;
+  userId?: string;
+  pickupCoords?: { lat: number; lng: number };
+  productWeight?: number;
+}): Promise<any> {
+  const res = await fetch(`${API_BASE}/agents/inspect`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error("Agent pipeline failed");
+  const data = await res.json();
+  return data.data;
+}
+
+export async function askCopilot(context: any, question: string): Promise<string> {
+  const res = await fetch(`${API_BASE}/agents/copilot`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ context, question }),
+  });
+  if (!res.ok) throw new Error("Copilot query failed");
+  const data = await res.json();
+  return data.data.answer;
+}
+
+export async function fetchAllReturns(): Promise<ReturnItem[]> {
+  const res = await fetch(`${API_BASE}/returns?limit=50`, { cache: "no-store" });
+  if (!res.ok) throw new Error("Failed to fetch returns");
+  const data = await res.json();
+  return data.data;
+}

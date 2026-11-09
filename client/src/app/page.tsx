@@ -16,8 +16,23 @@ import {
   RefreshCw, 
   Zap, 
   TrendingDown, 
-  Building2 
+  Building2,
+  Eye,
+  ShieldAlert,
+  Truck,
+  Bot,
+  CheckCircle2,
+  Activity,
 } from "lucide-react";
+
+// Mock live agent activity feed (auto-generated based on seeded returns)
+const AGENT_FEED = [
+  { agent: "VisionQualityAgent", product: "iPhone 15 Pro Max", result: "PRISTINE · 94/100", badge: "text-emerald-400 bg-emerald-500/10", icon: Eye, time: "12s ago" },
+  { agent: "FraudSentinel", product: "Samsung Galaxy S24", result: "HIGH RISK · Score 88/100", badge: "text-red-400 bg-red-500/10", icon: ShieldAlert, time: "1m ago" },
+  { agent: "LogisticsDispatcher", product: "Sony WH-1000XM5", result: "→ Pune Micro Hub · ₹1,200 saved", badge: "text-blue-400 bg-blue-500/10", icon: Truck, time: "2m ago" },
+  { agent: "VisionQualityAgent", product: "Zara Blazer", result: "GOOD · 78/100 · Tags intact", badge: "text-blue-400 bg-blue-500/10", icon: Eye, time: "4m ago" },
+  { agent: "LogisticsDispatcher", product: "MacBook Air M3", result: "→ Direct Peer · ₹4,500 saved", badge: "text-emerald-400 bg-emerald-500/10", icon: Truck, time: "7m ago" },
+];
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -104,6 +119,71 @@ export default function DashboardPage() {
 
       {/* KPI Cards */}
       {stats && <KPICards stats={stats} />}
+
+      {/* AI Agent Lab Promo Banner */}
+      <div className="rounded-3xl border border-violet-500/20 bg-gradient-to-r from-violet-950/40 via-purple-950/30 to-slate-950 p-6 flex flex-col md:flex-row items-center gap-6 relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute right-0 top-0 w-80 h-full bg-gradient-to-l from-violet-600/10 to-transparent" />
+        </div>
+        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-700 flex items-center justify-center flex-shrink-0 shadow-xl shadow-violet-500/30">
+          <Sparkles className="w-7 h-7 text-white" />
+        </div>
+        <div className="flex-1 relative z-10">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-bold text-violet-400 uppercase tracking-wider">New</span>
+            <span className="text-xs text-white/30">&middot;</span>
+            <span className="text-xs text-white/40">Multi-Agent AI Pipeline</span>
+          </div>
+          <h3 className="text-lg font-black text-white">Agent Lab — Autonomous Return Intelligence</h3>
+          <p className="text-sm text-white/50 mt-0.5">3 AI agents work in parallel: VisionQualityAgent analyzes item condition, FraudSentinel scores risk, LogisticsDispatcher finds optimal route. All in one click.</p>
+        </div>
+        <div className="flex gap-3 flex-shrink-0 relative z-10">
+          <Link
+            href="/agent-lab"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-500 hover:to-purple-600 text-white text-sm font-bold shadow-lg shadow-violet-500/30 transition-all"
+          >
+            <Sparkles className="w-4 h-4" /> Open Agent Lab
+          </Link>
+        </div>
+      </div>
+
+      {/* Live Agent Activity Feed */}
+      <div className="rounded-3xl border border-slate-800 bg-slate-900/60 p-6">
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-2">
+            <Activity className="w-4 h-4 text-violet-400" />
+            <h3 className="text-base font-bold text-white">Live Agent Activity</h3>
+            <span className="inline-flex items-center gap-1 text-xs text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              Live
+            </span>
+          </div>
+          <Link href="/agent-lab" className="text-xs text-violet-400 hover:text-violet-300 font-semibold flex items-center gap-1">
+            Run inspection <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+        <div className="space-y-2">
+          {AGENT_FEED.map((entry, i) => {
+            const Icon = entry.icon;
+            return (
+              <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.04] hover:border-white/10 transition-colors">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${entry.badge}`}>
+                  <Icon className="w-4 h-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-white/80">{entry.agent}</span>
+                    <span className="text-xs text-white/30">&middot;</span>
+                    <span className="text-xs text-white/50 truncate">{entry.product}</span>
+                  </div>
+                  <p className={`text-xs font-medium ${entry.badge.split(" ")[0]}`}>{entry.result}</p>
+                </div>
+                <span className="text-[10px] text-white/25 flex-shrink-0">{entry.time}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
 
       {/* Analytics & Quick Reroute Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

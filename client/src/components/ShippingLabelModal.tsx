@@ -111,3 +111,4 @@ export function ShippingLabelModal({ item, isOpen, onClose }: ShippingLabelModal
     </div>
   );
 }
+

@@ -10,6 +10,7 @@ import returnRoutes from "./routes/returns";
 import orderRoutes from "./routes/orders";
 import dashboardRoutes from "./routes/dashboard";
 import routingRoutes from "./routes/routing";
+import agentRoutes from "./routes/agentRoutes";
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use("/api/returns", returnRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/routing", routingRoutes);
+app.use("/api/agents", agentRoutes);
 
 // Health check
 app.get("/api/health", (_req, res) => {
