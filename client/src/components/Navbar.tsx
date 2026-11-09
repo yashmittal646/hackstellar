@@ -12,6 +12,7 @@ import {
   Navigation,
   Sparkles,
   TrendingUp,
+  Play,
 } from "lucide-react";
 
 export function Navbar() {
@@ -26,6 +27,7 @@ export function Navbar() {
     { href: "/fraud", label: "Fraud Radar", icon: ShieldAlert },
     { href: "/carrier", label: "Driver App", icon: Navigation },
     { href: "/impact", label: "Impact Report", icon: TrendingUp },
+    { href: "/demo", label: "Demo Guide", icon: Play, demo: true },
   ];
 
   const linkClass = (item: (typeof navItems)[number]) => {
@@ -33,8 +35,12 @@ export function Navbar() {
     if (isActive) {
       return (item as any).highlight
         ? "bg-gradient-to-r from-violet-600 to-purple-700 text-white shadow-sm shadow-violet-500/30"
+        : (item as any).demo
+        ? "bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-sm"
         : "bg-primary text-primary-foreground shadow-sm";
     }
+    if ((item as any).demo)
+      return "bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border border-amber-500/20";
     return (item as any).highlight
       ? "bg-violet-500/10 text-violet-400 hover:bg-violet-500/20 border border-violet-500/20"
       : "text-muted-foreground hover:text-foreground hover:bg-muted/70";
