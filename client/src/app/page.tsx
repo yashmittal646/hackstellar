@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { KPICards } from "../components/KPICards";
+import { KPICards, KPICardSkeleton } from "../components/KPICards";
 import { RoutingChart } from "../components/RoutingChart";
 import { ReturnCard } from "../components/ReturnCard";
 import { RoiCalculator } from "../components/RoiCalculator";
@@ -73,10 +73,23 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center min-h-[70vh]">
-        <div className="flex flex-col items-center gap-3">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
-          <p className="text-sm font-medium text-slate-400">Loading OrbitReturn Intelligence Hub...</p>
+      <div className="container mx-auto max-w-7xl px-4 sm:px-6 py-8 space-y-8">
+        {/* Header skeleton */}
+        <div className="rounded-3xl bg-gradient-to-r from-indigo-950/80 via-slate-900/90 to-slate-950 p-6 md:p-8 border border-indigo-500/20 animate-pulse">
+          <div className="h-4 w-40 bg-indigo-900/60 rounded-full mb-4" />
+          <div className="h-9 w-72 bg-slate-800 rounded mb-3" />
+          <div className="h-4 w-96 bg-slate-800/60 rounded" />
+        </div>
+        {/* KPI skeletons */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...Array(6)].map((_, i) => <KPICardSkeleton key={i} />)}
+        </div>
+        {/* Content skeleton */}
+        <div className="rounded-3xl border border-slate-800 bg-slate-900/40 h-48 animate-pulse" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="rounded-2xl border border-slate-800 bg-slate-900/40 h-44 animate-pulse" />
+          ))}
         </div>
       </div>
     );
