@@ -182,6 +182,23 @@ export default function FraudRadarPage() {
                   </div>
                 </div>
 
+                {/* Risk score bar */}
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[10px] text-slate-500">
+                    <span>Fraud Confidence</span>
+                    <span className={alert.risk === "high" ? "text-rose-400" : "text-amber-400"}>{alert.score}%</span>
+                  </div>
+                  <div className="h-1 rounded-full bg-white/10 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-700 ${
+                        alert.score > 60 ? "bg-gradient-to-r from-orange-500 to-red-500"
+                        : "bg-gradient-to-r from-yellow-500 to-amber-500"
+                      }`}
+                      style={{ width: `${alert.score}%` }}
+                    />
+                  </div>
+                </div>
+
                 {/* Product info */}
                 <div>
                   <h4 className="font-bold text-white text-base">{alert.returnId?.productId?.name || "Product"}</h4>

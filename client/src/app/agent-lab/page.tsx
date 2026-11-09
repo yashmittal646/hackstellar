@@ -388,24 +388,59 @@ export default function AgentLabPage() {
         {/* Results */}
         {dossier && !running && (
           <div ref={resultsRef} className="space-y-6">
-            {/* Summary banner */}
+            {/* Summary banner — with animated score ring */}
             <div className="rounded-2xl border border-white/8 bg-gradient-to-r from-[#0d1117] via-[#111827] to-[#0d1117] p-6">
-              <div className="flex items-start justify-between gap-4 flex-wrap">
-                <div>
+              <div className="flex items-start gap-6 flex-wrap">
+                {/* SVG Score Ring */}
+                {(() => {
+                  const score = dossier.visionAgent?.overallQualityScore ?? 0;
+                  const grade = dossier.visionAgent?.qualityGrade ?? "";
+                  const r = 36, cx = 44, cy = 44, strokeW = 7;
+                  const circ = 2 * Math.PI * r;
+                  const fill = (score / 100) * circ;
+                  const gradeGrad: Record<string, string> = {
+                    PRISTINE: "#10b981", LIKE_NEW: "#3b82f6",
+                    REFURBISHABLE: "#f59e0b", TAMPERED: "#f97316", DEFECTIVE: "#ef4444",
+                  };
+                  const color = gradeGrad[grade] ?? "#6366f1";
+                  return (
+                    <svg width={88} height={88} viewBox="0 0 88 88" className="shrink-0">
+                      <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={strokeW} />
+                      <circle
+                        cx={cx} cy={cy} r={r}
+                        fill="none" stroke={color} strokeWidth={strokeW}
+                        strokeDasharray={`${fill} ${circ}`}
+                        strokeDashoffset={circ / 4}
+                        strokeLinecap="round"
+                        style={{ transition: "stroke-dasharray 1s ease" }}
+                        transform={`rotate(-90 ${cx} ${cy})`}
+                      />
+                      <text x={cx} y={cy - 4} textAnchor="middle" fill="white" fontSize="18" fontWeight="800">{score}</text>
+                      <text x={cx} y={cy + 10} textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize="8">/100</text>
+                    </svg>
+                  );
+                })()}
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                     <span className="text-sm font-semibold text-emerald-400">Inspection Complete</span>
+                    <span className={`ml-2 text-xs font-black px-2 py-0.5 rounded-full ${getGradeColor(dossier.visionAgent?.qualityGrade)} bg-white/5`}>
+                      {dossier.visionAgent?.qualityGrade}
+                    </span>
                   </div>
                   <h2 className="text-xl font-bold text-white mb-1">{dossier.productName}</h2>
-                  <p className="text-sm text-white/60 max-w-2xl">{dossier.orchestratorSummary}</p>
-                </div>
-                <div className="text-right flex-shrink-0">
-                  <div className="text-3xl font-black text-white mb-0.5">
-                    {dossier.visionAgent?.overallQualityScore}
-                    <span className="text-lg text-white/40">/100</span>
-                  </div>
-                  <div className={`text-sm font-bold ${getGradeColor(dossier.visionAgent?.qualityGrade)}`}>
-                    {dossier.visionAgent?.qualityGrade}
+                  <p className="text-sm text-white/60 leading-relaxed">{dossier.orchestratorSummary}</p>
+                  {/* Quick savings strip */}
+                  <div className="flex flex-wrap gap-4 mt-3 text-xs">
+                    <span className="text-emerald-400 font-semibold">
+                      ₹{dossier.dispatcher?.savings?.costSavedINR?.toLocaleString() ?? 0} saved
+                    </span>
+                    <span className="text-teal-400 font-semibold">
+                      {dossier.dispatcher?.savings?.co2SavedKg ?? 0} kg CO₂ avoided
+                    </span>
+                    <span className="text-indigo-400 font-semibold">
+                      → {dossier.dispatcher?.assignedDestination?.name?.split(" ").slice(0, 3).join(" ")}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -432,6 +467,13 @@ export default function AgentLabPage() {
                   <div className="flex justify-between text-sm">
                     <span className="text-white/50">Overall Score</span>
                     <span className="text-white font-semibold">{dossier.visionAgent.overallQualityScore}/100</span>
+                  </div>
+                  {/* Animated score bar */}
+                  <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-blue-500 to-cyan-400 transition-all duration-1000"
+                      style={{ width: `${dossier.visionAgent.overallQualityScore}%` }}
+                    />
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-white/50">Packaging</span>
@@ -497,6 +539,19 @@ export default function AgentLabPage() {
                     <span className="text-white/50">Risk Score</span>
                     <span className="text-white font-semibold">{dossier.fraudSentinel.riskScore}/100</span>
                   </div>
+                  {/* Animated risk bar — higher score = more red */}
+                  <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-1000 ${
+                        dossier.fraudSentinel.riskScore > 60
+                          ? "bg-gradient-to-r from-orange-500 to-red-500"
+                          : dossier.fraudSentinel.riskScore > 30
+                          ? "bg-gradient-to-r from-yellow-500 to-amber-500"
+                          : "bg-gradient-to-r from-emerald-500 to-teal-400"
+                      }`}
+                      style={{ width: `${dossier.fraudSentinel.riskScore}%` }}
+                    />
+                  </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-white/50">Verdict</span>
                     <span className="text-white text-xs font-medium">{dossier.fraudSentinel.verdict}</span>
@@ -538,6 +593,21 @@ export default function AgentLabPage() {
                     <span className="text-white/50">Distance</span>
                     <span className="text-white font-semibold">{dossier.dispatcher.assignedDestination?.distanceKm} km</span>
                   </div>
+                  {/* Routing confidence bar */}
+                  {dossier.dispatcher.routingScore != null && (
+                    <>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-white/50">Routing Score</span>
+                        <span className="text-emerald-400 font-semibold">{Math.round(dossier.dispatcher.routingScore * 100)}%</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-1000"
+                          style={{ width: `${Math.round(dossier.dispatcher.routingScore * 100)}%` }}
+                        />
+                      </div>
+                    </>
+                  )}
                   <div className="mt-3 pt-3 border-t border-white/5 grid grid-cols-2 gap-2">
                     <div className="rounded-xl bg-emerald-500/5 border border-emerald-500/15 p-2.5 text-center">
                       <div className="text-emerald-400 font-bold text-sm">
@@ -650,13 +720,42 @@ export default function AgentLabPage() {
 
         {/* Empty state */}
         {!dossier && !running && (
-          <div className="rounded-2xl border border-dashed border-white/10 p-16 flex flex-col items-center gap-4 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center">
-              <Sparkles className="w-8 h-8 text-white/20" />
+          <div className="rounded-2xl border border-dashed border-white/10 p-12 flex flex-col items-center gap-6 text-center">
+            {/* Animated 3-agent icons */}
+            <div className="flex items-center gap-4">
+              {[
+                { icon: Eye, color: "from-blue-500 to-cyan-600", label: "Vision" },
+                { icon: ShieldAlert, color: "from-red-500 to-rose-600", label: "Fraud" },
+                { icon: Truck, color: "from-emerald-500 to-teal-600", label: "Logistics" },
+              ].map((agent, i) => {
+                const Icon = agent.icon;
+                return (
+                  <div key={agent.label} className="flex flex-col items-center gap-2">
+                    <div
+                      className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${agent.color} flex items-center justify-center opacity-30`}
+                      style={{ animationDelay: `${i * 0.3}s` }}
+                    >
+                      <Icon className="w-7 h-7 text-white" />
+                    </div>
+                    <span className="text-[10px] text-white/20 font-semibold uppercase tracking-widest">{agent.label}</span>
+                  </div>
+                );
+              })}
             </div>
             <div>
-              <p className="text-white/40 font-medium">Select a scenario above or enter custom details</p>
-              <p className="text-white/25 text-sm mt-1">The AI agents will inspect the return in real time</p>
+              <p className="text-white/40 font-semibold text-base">3 AI Agents Standing By</p>
+              <p className="text-white/25 text-sm mt-1">Click a scenario above to trigger the autonomous pipeline</p>
+            </div>
+            <div className="flex flex-wrap justify-center gap-2">
+              {PRESETS.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => runPipeline(p.payload, p.id)}
+                  className={`text-xs px-3 py-1.5 rounded-full border ${p.bg} text-white/60 hover:text-white transition-colors`}
+                >
+                  {p.label}
+                </button>
+              ))}
             </div>
           </div>
         )}
