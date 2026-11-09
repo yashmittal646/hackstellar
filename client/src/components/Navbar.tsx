@@ -18,7 +18,7 @@ export function Navbar() {
   const pathname = usePathname();
 
   const navItems = [
-    { href: "/", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/", label: "Dashboard", icon: LayoutDashboard, live: true },
     { href: "/agent-lab", label: "Agent Lab", icon: Sparkles, highlight: true },
     { href: "/map", label: "Live Map", icon: Compass },
     { href: "/returns", label: "Returns Fleet", icon: RotateCcw },
@@ -49,11 +49,16 @@ export function Navbar() {
             <Truck className="h-5 w-5" />
           </div>
           <div className="flex flex-col">
-            <span className="bg-gradient-to-r from-emerald-500 to-indigo-600 bg-clip-text text-transparent font-black leading-none text-xl">
-              OrbitReturn
-            </span>
-            <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold mt-1">
-              Smart Rerouting Engine
+            <div className="flex items-center gap-2">
+              <span className="bg-gradient-to-r from-emerald-500 to-indigo-600 bg-clip-text text-transparent font-black leading-none text-xl">
+                OrbitReturn
+              </span>
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 tracking-widest hidden sm:inline">
+                PS-16
+              </span>
+            </div>
+            <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold mt-0.5">
+              Hackstellar 2026 · AI Engine
             </span>
           </div>
         </Link>
@@ -70,6 +75,9 @@ export function Navbar() {
               >
                 <Icon className="h-4 w-4 shrink-0" />
                 {item.label}
+                {(item as any).live && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse flex-shrink-0" />
+                )}
               </Link>
             );
           })}
