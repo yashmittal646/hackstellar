@@ -1,29 +1,23 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { StarField } from "../StarField";
 import { AuroraBackground } from "../AuroraBackground";
-import { useTypewriter } from "../../hooks/useTypewriter";
 import {
-  ArrowRight, Zap, Eye, ShieldAlert, Truck, TrendingDown, Leaf, Package, ChevronDown,
+  ArrowRight,
+  ShieldCheck,
+  Cpu,
+  Layers,
+  Activity,
+  CheckCircle2,
+  Terminal,
+  Play,
+  RotateCcw,
+  Sparkles,
+  Zap,
 } from "lucide-react";
-
-const PHRASES = [
-  "Reroute Returns. Skip the Warehouse.",
-  "AI Agents Working at the Speed of Logistics.",
-  "Eliminate Reverse Logistics Waste. Forever.",
-  "Real-Time Intelligence. Zero Unnecessary Miles.",
-];
-
-const stagger = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.12 } },
-};
-const fadeUp = {
-  hidden: { opacity: 0, y: 32 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: "easeOut" as const } },
-};
 
 interface Stats {
   totalReturns: number;
@@ -32,9 +26,7 @@ interface Stats {
 }
 
 export function HeroSection() {
-  const tagline = useTypewriter(PHRASES, 55, 30, 2500);
   const [stats, setStats] = useState<Stats | null>(null);
-  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     fetch("http://localhost:5000/api/dashboard/stats")
@@ -43,226 +35,223 @@ export function HeroSection() {
       .catch(() => {});
   }, []);
 
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 60);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  const agents = [
-    { icon: Eye, label: "Vision Agent", desc: "Grades condition in real-time", color: "text-indigo-400", bg: "bg-indigo-500/10 border-indigo-500/20" },
-    { icon: ShieldAlert, label: "Fraud Sentinel", desc: "Detects manipulation & swap fraud", color: "text-rose-400", bg: "bg-rose-500/10 border-rose-500/20" },
-    { icon: Truck, label: "Dispatcher", desc: "Routes to nearest demand point", color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20" },
-  ];
+  const totalReturns = stats?.totalReturns ?? 21;
+  const totalCost = stats?.savings?.totalCostSaved != null ? Math.round(stats.savings.totalCostSaved) : 26896;
+  const totalCo2 = stats?.savings?.totalCo2Saved != null ? Math.round(stats.savings.totalCo2Saved * 10) / 10 : 197.8;
 
   return (
-    <section className="relative min-h-screen flex flex-col justify-center overflow-hidden">
-      {/* Fixed starfield */}
+    <section className="relative min-h-[92vh] flex flex-col justify-center overflow-hidden pt-12 pb-20 border-b border-white/[0.06]">
+      {/* Dynamic ambient canvas & telemetry grid */}
       <StarField />
-
-      {/* Aurora blobs */}
       <AuroraBackground />
 
-      {/* Perspective grid */}
-      <div
-        className="absolute inset-0 perspective-grid pointer-events-none"
-        style={{ zIndex: 2 }}
-      />
-
-      {/* Content */}
-      <div className="relative container mx-auto max-w-7xl px-4 sm:px-6 pt-24 pb-16" style={{ zIndex: 10 }}>
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* Left column */}
+      <div className="relative container mx-auto max-w-7xl px-4 sm:px-6 z-10">
+        <div className="grid lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+          
+          {/* Left Editorial Content */}
           <motion.div
-            variants={stagger}
-            initial="hidden"
-            animate="visible"
-            className="space-y-6"
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, ease: "easeOut" }}
+            className="lg:col-span-7 space-y-7"
           >
-            {/* Badge */}
-            <motion.div variants={fadeUp}>
-              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 backdrop-blur-sm">
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
-                Hackstellar 2026 · Problem Statement 16
+            {/* System Status Monospace Pill */}
+            <div className="inline-flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.08] backdrop-blur-md">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 relative">
+                <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />
               </span>
-            </motion.div>
+              <span className="font-mono text-xs uppercase tracking-wider text-neutral-300">
+                ORBIT-RETURN ENGINE // PS-16 PRODUCTION SPEC
+              </span>
+            </div>
 
-            {/* Main headline */}
-            <motion.div variants={fadeUp} className="space-y-3">
-              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black leading-[1.05] tracking-tight">
-                <span className="text-white">Returns</span>
+            {/* Core Headline */}
+            <div className="space-y-3">
+              <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-[1.06]">
+                Reverse Logistics,{" "}
                 <br />
-                <span className="shimmer-text">That Never</span>
-                <br />
-                <span className="text-white">Go Home</span>
+                <span className="cyan-gradient font-extrabold">Intercepted at the Edge.</span>
               </h1>
-              <div className="h-14">
-                <p className="text-lg sm:text-xl text-slate-400 cursor-blink">
-                  {tagline}
-                </p>
+              <p className="text-base sm:text-lg text-neutral-400 max-w-xl font-normal leading-relaxed pt-1">
+                An autonomous multi-agent intelligence layer that inspects condition, stops refund fraud, and recalculates point-to-point delivery routes before items ever reach a warehouse.
+              </p>
+            </div>
+
+            {/* Live Operational Metrics Ledger */}
+            <div className="grid grid-cols-3 gap-3 max-w-lg pt-1">
+              <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] backdrop-blur-sm">
+                <div className="font-mono text-[11px] text-neutral-400 uppercase tracking-wider">Processed</div>
+                <div className="text-2xl font-bold text-white mt-0.5">{totalReturns}</div>
+                <div className="text-[11px] text-emerald-400 font-medium">100% Autonomous</div>
               </div>
-            </motion.div>
+              <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] backdrop-blur-sm">
+                <div className="font-mono text-[11px] text-neutral-400 uppercase tracking-wider">Capital Saved</div>
+                <div className="text-2xl font-bold text-cyan-300 mt-0.5">₹{totalCost.toLocaleString()}</div>
+                <div className="text-[11px] text-neutral-400 font-medium">₹1,280 / item avg</div>
+              </div>
+              <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] backdrop-blur-sm">
+                <div className="font-mono text-[11px] text-neutral-400 uppercase tracking-wider">CO₂ Diverted</div>
+                <div className="text-2xl font-bold text-emerald-300 mt-0.5">{totalCo2} kg</div>
+                <div className="text-[11px] text-neutral-400 font-medium">Zero-haul return</div>
+              </div>
+            </div>
 
-            {/* Description */}
-            <motion.p variants={fadeUp} className="text-slate-400 text-base leading-relaxed max-w-lg">
-              OrbitReturn's autonomous AI pipeline intercepts e-commerce returns in real-time —
-              grading condition, detecting fraud, and routing to the nearest demand point before
-              the warehouse ever sees it.
-            </motion.p>
-
-            {/* Live stats pills */}
-            <motion.div variants={fadeUp} className="flex flex-wrap gap-3">
-              {[
-                { icon: Package, label: `${stats?.totalReturns ?? "21"} Returns AI-Analyzed`, color: "text-violet-300 bg-violet-500/10 border-violet-500/20" },
-                { icon: TrendingDown, label: `₹${stats?.savings?.totalCostSaved != null ? Math.round(stats.savings.totalCostSaved).toLocaleString() : "26,896"} Saved`, color: "text-emerald-300 bg-emerald-500/10 border-emerald-500/20" },
-                { icon: Leaf, label: `${stats?.savings?.totalCo2Saved != null ? Math.round(stats.savings.totalCo2Saved * 10) / 10 : "1,978"} kg CO₂ Offset`, color: "text-teal-300 bg-teal-500/10 border-teal-500/20" },
-              ].map((s) => (
-                <span key={s.label} className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border ${s.color} backdrop-blur-sm`}>
-                  <s.icon className="h-3.5 w-3.5" />
-                  {s.label}
-                </span>
-              ))}
-            </motion.div>
-
-            {/* CTA buttons */}
-            <motion.div variants={fadeUp} className="flex flex-wrap gap-4 pt-2">
+            {/* High-Contrast Action Triggers */}
+            <div className="flex flex-wrap items-center gap-3.5 pt-2">
               <Link
                 href="/agent-lab"
-                className="group flex items-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold shadow-xl shadow-indigo-500/30 transition-all duration-300 hover:scale-105 hover:shadow-indigo-500/50"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white text-neutral-950 font-semibold text-sm hover:bg-neutral-100 transition-all shadow-[0_1px_2px_rgba(0,0,0,0.08),0_4px_16px_rgba(255,255,255,0.15)] group"
               >
-                <Zap className="h-4 w-4" />
-                Try Live Agent Lab
-                <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                <Zap className="w-4 h-4 text-neutral-950 fill-neutral-950" />
+                <span>Simulate Agent Pipeline</span>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
               </Link>
               <Link
                 href="/demo"
-                className="flex items-center gap-2 px-6 py-3.5 rounded-xl border border-slate-600 bg-slate-900/60 hover:bg-slate-800/80 text-slate-200 font-semibold backdrop-blur-sm transition-all duration-300"
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-neutral-200 border border-white/[0.1] font-medium text-sm transition-all backdrop-blur-sm"
               >
-                Judge Demo Guide
+                <Play className="w-3.5 h-3.5 text-neutral-400 fill-neutral-400" />
+                <span>Interactive Demo Guide</span>
               </Link>
-            </motion.div>
-          </motion.div>
-
-          {/* Right column — Interactive mockup card */}
-          <motion.div
-            initial={{ opacity: 0, x: 60 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 1, delay: 0.3, ease: "easeOut" }}
-            className="float-anim"
-          >
-            <div className="relative">
-              {/* Glow behind card */}
-              <div className="absolute -inset-4 bg-gradient-to-r from-indigo-500/20 via-violet-500/20 to-emerald-500/20 rounded-3xl blur-2xl" />
-
-              {/* Main mockup card */}
-              <div className="relative rounded-2xl border border-indigo-500/20 bg-slate-900/80 backdrop-blur-xl p-6 shadow-2xl overflow-hidden glow-indigo">
-                {/* Scan bar animation */}
-                <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
-                  <div className="scan-bar" />
-                </div>
-
-                {/* Card header */}
-                <div className="flex items-center justify-between mb-5">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider">Live Pipeline</span>
-                      <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                        Active
-                      </span>
-                    </div>
-                    <h3 className="text-white font-black text-lg">iPhone 15 Pro Max</h3>
-                    <p className="text-xs text-slate-400">Order #ORB-2847 · Mumbai → Delhi</p>
-                  </div>
-                  <div className="relative w-16 h-16">
-                    {/* Score ring */}
-                    <svg className="absolute inset-0 w-16 h-16 -rotate-90" viewBox="0 0 64 64">
-                      <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(99,102,241,0.15)" strokeWidth="6" />
-                      <circle
-                        cx="32" cy="32" r="26" fill="none"
-                        stroke="url(#scoreGrad)" strokeWidth="6"
-                        strokeLinecap="round"
-                        strokeDasharray={`${0.97 * 2 * Math.PI * 26} ${2 * Math.PI * 26}`}
-                      />
-                      <defs>
-                        <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                          <stop offset="0%" stopColor="#818cf8" />
-                          <stop offset="100%" stopColor="#34d399" />
-                        </linearGradient>
-                      </defs>
-                    </svg>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-sm font-black text-white">97</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Agent pipeline steps */}
-                <div className="space-y-3 mb-5">
-                  {agents.map((a, i) => (
-                    <motion.div
-                      key={a.label}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.8 + i * 0.3, duration: 0.5 }}
-                      className={`flex items-center gap-3 p-3 rounded-xl border ${a.bg}`}
-                    >
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${a.bg}`}>
-                        <a.icon className={`h-4 w-4 ${a.color}`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className={`text-xs font-bold ${a.color}`}>{a.label}</div>
-                        <div className="text-[11px] text-slate-400">{a.desc}</div>
-                      </div>
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ delay: 1.2 + i * 0.3 }}
-                        className="text-emerald-400"
-                      >
-                        ✓
-                      </motion.div>
-                    </motion.div>
-                  ))}
-                </div>
-
-                {/* Result */}
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 2.0, duration: 0.5 }}
-                  className="rounded-xl bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 p-3 flex items-center gap-3"
-                >
-                  <span className="text-2xl">✨</span>
-                  <div>
-                    <div className="text-xs font-black text-emerald-400">PRISTINE · Rerouted</div>
-                    <div className="text-[11px] text-slate-400">→ Nearby Customer · ₹4,500 saved · Warehouse bypassed</div>
-                  </div>
-                </motion.div>
-              </div>
-
-              {/* Floating PRISTINE badge */}
-              <motion.div
-                initial={{ opacity: 0, y: 20, scale: 0.8 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ delay: 2.2, duration: 0.5 }}
-                className="absolute -top-3 -right-3 px-3 py-1.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs font-black shadow-lg shadow-emerald-500/40"
+              <Link
+                href="/dashboard"
+                className="inline-flex items-center gap-1.5 px-4 py-3 text-neutral-400 hover:text-white text-sm font-medium transition-colors"
               >
-                PRISTINE ✨
-              </motion.div>
+                <span>Live Fleet Console</span>
+                <span className="text-neutral-600 font-mono">→</span>
+              </Link>
+            </div>
+
+            {/* Micro Tech Protocol Badges */}
+            <div className="pt-2 flex items-center gap-6 text-xs text-neutral-400 font-mono">
+              <div className="flex items-center gap-1.5">
+                <Cpu className="w-3.5 h-3.5 text-cyan-400" />
+                <span>VISION INFERENCE 300MS</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                <span>DYNAMIC FRAUD QUARANTINE</span>
+              </div>
             </div>
           </motion.div>
-        </div>
-      </div>
 
-      {/* Scroll chevron */}
-      <div
-        className="absolute bottom-8 left-1/2 transition-opacity duration-500"
-        style={{ zIndex: 10, opacity: scrolled ? 0 : 1, animation: "bounce-chevron 2s ease-in-out infinite" }}
-      >
-        <ChevronDown className="h-6 w-6 text-slate-500" />
+          {/* Right Precision Telemetry Console */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+            className="lg:col-span-5"
+          >
+            <div className="relative">
+              {/* Subtle back ambient glow */}
+              <div className="absolute -inset-1 rounded-2xl bg-gradient-to-tr from-cyan-500/20 via-transparent to-emerald-500/10 blur-xl opacity-50 pointer-events-none" />
+
+              {/* Console Chassis */}
+              <div className="relative rounded-2xl bg-[#0b0e14] border border-white/[0.1] shadow-2xl overflow-hidden">
+                {/* Header Bar */}
+                <div className="px-4 py-3 bg-[#0e121a] border-b border-white/[0.08] flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-neutral-700 inline-block" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-neutral-700 inline-block" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-neutral-700 inline-block" />
+                    <span className="ml-2 font-mono text-[11px] text-neutral-400 uppercase tracking-widest">
+                      TELEMETRY_HUD // INGEST_QUEUE
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                    <Activity className="w-3 h-3 animate-pulse" />
+                    STREAM: ACTIVE
+                  </div>
+                </div>
+
+                {/* Body Content */}
+                <div className="p-5 space-y-4">
+                  {/* Item Telemetry Bar */}
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                    <div>
+                      <div className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider">RETURN MANIFEST #ORB-8839</div>
+                      <div className="font-semibold text-white text-sm mt-0.5">Apple iPhone 15 Pro Max</div>
+                      <div className="text-[11px] text-neutral-400 mt-0.5">Origin: Bandra West, Mumbai → Buyer In Transit</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-[10px] font-mono text-neutral-400 uppercase">QUALITY GRADE</div>
+                      <div className="text-emerald-400 font-mono font-bold text-sm mt-0.5">PRISTINE · 97.4%</div>
+                      <div className="text-[10px] text-neutral-400">Resale Ready</div>
+                    </div>
+                  </div>
+
+                  {/* Laser Scanning Visualizer */}
+                  <div className="relative h-28 rounded-xl bg-[#07090d] border border-white/[0.06] overflow-hidden flex items-center justify-center">
+                    {/* Laser sweep line */}
+                    <div className="laser-beam" />
+                    {/* Grid texture inside viewport */}
+                    <div className="absolute inset-0 tech-grid opacity-20 pointer-events-none" />
+                    {/* Crosshair indicators */}
+                    <div className="absolute top-2 left-2 text-[9px] font-mono text-cyan-400/80">[SYS.OPTIC: OK]</div>
+                    <div className="absolute bottom-2 right-2 text-[9px] font-mono text-neutral-400">RES: 3840×2160</div>
+
+                    {/* Central Inspection Target */}
+                    <div className="relative z-10 flex flex-col items-center">
+                      <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-300 font-mono text-xs font-bold shadow-[0_0_15px_rgba(0,240,255,0.2)]">
+                        97/100
+                      </div>
+                      <span className="text-[10px] font-mono text-neutral-400 mt-1.5 uppercase tracking-widest">
+                        SERIAL & SEAL VERIFIED
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Multi-Agent Sequential Decision Flow */}
+                  <div className="space-y-2 text-xs font-mono">
+                    <div className="flex items-center justify-between p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+                      <div className="flex items-center gap-2 text-neutral-300">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>01 VisionQualityAgent</span>
+                      </div>
+                      <span className="text-cyan-400 font-semibold">PASS (Pristine Grade)</span>
+                    </div>
+
+                    <div className="flex items-center justify-between p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+                      <div className="flex items-center gap-2 text-neutral-300">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>02 FraudSentinel</span>
+                      </div>
+                      <span className="text-emerald-400 font-semibold">CLEARED (Risk: 0.04)</span>
+                    </div>
+
+                    <div className="flex items-center justify-between p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+                      <div className="flex items-center gap-2 text-neutral-300">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>03 LogisticsDispatcher</span>
+                      </div>
+                      <span className="text-white font-semibold">Direct Peer Match (3.2 km)</span>
+                    </div>
+                  </div>
+
+                  {/* Routing Decision Result Strip */}
+                  <div className="p-3 rounded-xl bg-gradient-to-r from-cyan-950/40 via-emerald-950/30 to-neutral-900 border border-cyan-500/30 flex items-center justify-between">
+                    <div>
+                      <div className="text-[10px] font-mono text-cyan-300 uppercase tracking-widest">AUTONOMOUS DISPATCH DECISION</div>
+                      <div className="text-xs font-bold text-white mt-0.5">Rerouted to Buyer #ORB-9201 · Bypass Hub</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-emerald-400 font-mono font-bold text-sm">₹4,200 SAVED</div>
+                      <div className="text-[10px] text-neutral-400">12.8 kg CO₂ reduced</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Console Footer */}
+                <div className="px-4 py-2.5 bg-[#090b10] border-t border-white/[0.06] flex items-center justify-between text-[11px] font-mono text-neutral-400">
+                  <span>DISPATCH PROTOCOL // ACTIVE</span>
+                  <span className="text-neutral-400">HASH: a8f9c1...9e</span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+        </div>
       </div>
     </section>
   );
 }
-

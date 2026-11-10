@@ -1,75 +1,80 @@
 "use client";
+
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useInView } from "../../hooks/useInView";
-import { AuroraBackground } from "../AuroraBackground";
-import { ArrowRight, Zap, PlayCircle } from "lucide-react";
+import { ArrowRight, Zap, Play, Terminal, Cpu } from "lucide-react";
 
 export function CTASection() {
-  const [ref, inView] = useInView(0.1);
+  const [ref, inView] = useInView(0.15);
 
   return (
-    <section ref={ref} className="relative py-32 overflow-hidden">
-      {/* Deep gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-indigo-950 via-violet-950 to-slate-950" />
-      <AuroraBackground />
+    <section ref={ref} className="relative py-32 overflow-hidden bg-[#07090e]">
+      {/* Subtle top light flare */}
+      <div 
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] opacity-30 blur-[100px] pointer-events-none"
+        style={{
+          background: "radial-gradient(circle, rgba(56,189,248,0.2) 0%, rgba(16,185,129,0.1) 40%, transparent 70%)"
+        }}
+      />
 
-      {/* Grid overlay */}
-      <div className="absolute inset-0 perspective-grid opacity-40" />
-
-      <div className="relative container mx-auto max-w-4xl px-4 sm:px-6 text-center" style={{ zIndex: 10 }}>
+      <div className="relative container mx-auto max-w-5xl px-4 sm:px-6 text-center z-10">
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8 }}
-          className="space-y-8"
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="p-10 sm:p-16 rounded-3xl bg-[#0b0e15] border border-white/[0.1] shadow-2xl relative overflow-hidden"
         >
-          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold bg-white/10 text-white/70 border border-white/20 backdrop-blur-sm">
-            🏆 Hackstellar 2026 · Problem Statement 16
-          </span>
+          {/* Background grid */}
+          <div className="absolute inset-0 tech-grid opacity-20 pointer-events-none" />
 
-          <h2 className="text-5xl sm:text-6xl lg:text-7xl font-black text-white leading-[1.05]">
-            See the Future of
-            <br />
-            <span className="shimmer-text">Reverse Logistics</span>
-            <br />
-            Live.
+          {/* System spec badge */}
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.08] text-neutral-300 font-mono text-xs uppercase tracking-wider mb-6">
+            <Terminal className="w-3.5 h-3.5 text-cyan-400" />
+            Hackstellar 2026 // Problem Statement 16
+          </div>
+
+          <h2 className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-tight">
+            Deploy Autonomous Rerouting <br />
+            <span className="cyan-gradient font-extrabold">Across Your Reverse Supply Chain.</span>
           </h2>
 
-          <p className="text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed">
-            Run a full AI pipeline on a real return in under 60 seconds.
-            Watch VisionAgent grade, FraudSentinel flag, and Dispatcher reroute — all autonomous.
+          <p className="text-neutral-400 text-base sm:text-lg max-w-2xl mx-auto mt-4 leading-relaxed font-normal">
+            Test the live 3-agent pipeline against real returns. Experience doorstep computer vision grading, fraud risk indexing, and spatial peer-to-peer rerouting in real-time.
           </p>
 
-          <div className="flex flex-wrap gap-4 justify-center pt-4">
+          {/* Action triggers */}
+          <div className="flex flex-wrap items-center justify-center gap-4 pt-8">
             <Link
               href="/agent-lab"
-              className="group flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold text-lg shadow-2xl shadow-indigo-500/40 transition-all duration-300 hover:scale-105 hover:shadow-indigo-500/60"
+              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-white text-neutral-950 font-semibold text-sm hover:bg-neutral-100 transition-all shadow-[0_1px_2px_rgba(0,0,0,0.08),0_4px_16px_rgba(255,255,255,0.15)] group"
             >
-              <Zap className="h-5 w-5" />
-              Launch Agent Lab
-              <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              <Zap className="w-4 h-4 text-neutral-950 fill-neutral-950" />
+              <span>Launch Live Agent Lab</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </Link>
+
             <Link
               href="/demo"
-              className="flex items-center gap-2 px-8 py-4 rounded-xl border-2 border-white/20 bg-white/5 hover:bg-white/10 text-white font-bold text-lg backdrop-blur-sm transition-all duration-300"
+              className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-neutral-200 border border-white/[0.1] font-medium text-sm transition-all"
             >
-              <PlayCircle className="h-5 w-5" />
-              Judge Walkthrough
+              <Play className="w-3.5 h-3.5 text-neutral-400 fill-neutral-400" />
+              <span>Judge Walkthrough Guide</span>
             </Link>
           </div>
 
-          {/* Tech badges */}
-          <div className="flex flex-wrap justify-center gap-3 pt-4">
-            {["MongoDB Atlas", "Next.js 16", "Framer Motion", "TypeScript", "Autonomous AI"].map((t) => (
-              <span key={t} className="px-3 py-1 rounded-full text-xs font-semibold bg-white/5 border border-white/10 text-white/50">
-                {t}
-              </span>
-            ))}
+          {/* Tech specification markers */}
+          <div className="mt-12 pt-8 border-t border-white/[0.06] flex flex-wrap items-center justify-center gap-6 text-xs font-mono text-neutral-400">
+            <span>MONGODB ATLAS 2DSPHERE</span>
+            <span>·</span>
+            <span>NEXT.JS 16 ENTERPRISE SPEC</span>
+            <span>·</span>
+            <span>HEURISTIC AI SAFETY FALLBACK</span>
+            <span>·</span>
+            <span>SUB-400MS ROUTING DAG</span>
           </div>
         </motion.div>
       </div>
     </section>
   );
 }
-

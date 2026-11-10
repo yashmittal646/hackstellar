@@ -8,11 +8,12 @@ import {
   RotateCcw, 
   ShieldAlert, 
   PlusCircle,
-  Truck,
-  Navigation,
-  Sparkles,
-  TrendingUp,
+  Truck, 
+  Navigation, 
+  Sparkles, 
+  TrendingUp, 
   Play,
+  Zap
 } from "lucide-react";
 
 export function Navbar() {
@@ -33,38 +34,43 @@ export function Navbar() {
   const linkClass = (item: (typeof navItems)[number]) => {
     const isActive = pathname === item.href;
     if (isActive) {
-      return (item as any).highlight
-        ? "bg-gradient-to-r from-violet-600 to-purple-700 text-white shadow-sm shadow-violet-500/30"
-        : (item as any).demo
-        ? "bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-sm"
-        : "bg-primary text-primary-foreground shadow-sm";
+      if ((item as any).demo) {
+        return "bg-white text-neutral-950 font-semibold shadow-sm";
+      }
+      if ((item as any).highlight) {
+        return "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-semibold";
+      }
+      return "bg-white/[0.1] text-white border border-white/[0.14] font-semibold";
     }
-    if ((item as any).demo)
-      return "bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border border-amber-500/20";
-    return (item as any).highlight
-      ? "bg-violet-500/10 text-violet-400 hover:bg-violet-500/20 border border-violet-500/20"
-      : "text-muted-foreground hover:text-foreground hover:bg-muted/70";
+
+    if ((item as any).demo) {
+      return "bg-white text-neutral-950 hover:bg-neutral-200 font-semibold text-xs";
+    }
+    if ((item as any).highlight) {
+      return "bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20 border border-cyan-500/20";
+    }
+    return "text-neutral-400 hover:text-white hover:bg-white/[0.04]";
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b border-white/[0.08] bg-[#07090e]/85 backdrop-blur-xl">
       {/* ── Desktop row ─────────────────────────────────────────── */}
       <div className="container mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
-        <Link href="/" className="flex items-center gap-3 font-bold text-xl tracking-tight shrink-0">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 to-emerald-500 text-white shadow-md shadow-indigo-500/20">
-            <Truck className="h-5 w-5" />
+        <Link href="/" className="flex items-center gap-3 shrink-0 group">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-neutral-950 shadow-[0_0_20px_rgba(255,255,255,0.2)] group-hover:scale-105 transition-transform">
+            <Truck className="h-4 w-4 text-neutral-950" />
           </div>
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
-              <span className="bg-gradient-to-r from-emerald-500 to-indigo-600 bg-clip-text text-transparent font-black leading-none text-xl">
+              <span className="text-white font-bold text-lg tracking-tight">
                 OrbitReturn
               </span>
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 tracking-widest hidden sm:inline">
+              <span className="font-mono text-[9px] font-bold px-1.5 py-0.5 rounded bg-white/[0.08] text-neutral-300 border border-white/[0.1] tracking-widest hidden sm:inline">
                 PS-16
               </span>
             </div>
-            <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold mt-0.5">
-              Hackstellar 2026 · AI Engine
+            <span className="text-[10px] text-neutral-400 font-mono uppercase tracking-widest mt-0.5">
+              HACKSTELLAR 2026 // EDGE REROUTING
             </span>
           </div>
         </Link>
@@ -77,10 +83,10 @@ export function Navbar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${linkClass(item)}`}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${linkClass(item)}`}
               >
-                <Icon className="h-4 w-4 shrink-0" />
-                {item.label}
+                <Icon className="h-3.5 w-3.5 shrink-0" />
+                <span>{item.label}</span>
                 {(item as any).live && (
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse flex-shrink-0" />
                 )}
@@ -90,16 +96,16 @@ export function Navbar() {
         </nav>
 
         <div className="flex items-center gap-2 shrink-0">
-          <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="hidden sm:inline">Live Engine Active</span>
-            <span className="sm:hidden">Live</span>
+          <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-mono font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="hidden sm:inline">ENGINE ACTIVE</span>
+            <span className="sm:hidden">LIVE</span>
           </span>
         </div>
       </div>
 
       {/* ── Mobile scrollable nav row ────────────────────────────── */}
-      <div className="lg:hidden border-t border-border/30 bg-background/80">
+      <div className="lg:hidden border-t border-white/[0.06] bg-[#07090e]/95">
         <div className="flex overflow-x-auto gap-1 px-3 py-2 scrollbar-none">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -110,16 +116,12 @@ export function Navbar() {
                 href={item.href}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap shrink-0 ${
                   isActive
-                    ? (item as any).highlight
-                      ? "bg-violet-600 text-white"
-                      : "bg-primary text-primary-foreground"
-                    : (item as any).highlight
-                    ? "bg-violet-500/10 text-violet-400 border border-violet-500/20"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/70"
+                    ? "bg-white/[0.1] text-white font-semibold"
+                    : "text-neutral-400 hover:text-white"
                 }`}
               >
                 <Icon className="h-3.5 w-3.5 shrink-0" />
-                {item.label}
+                <span>{item.label}</span>
               </Link>
             );
           })}
