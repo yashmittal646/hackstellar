@@ -76,14 +76,14 @@ export function Navbar() {
         </Link>
 
         {/* Desktop nav — hidden on mobile */}
-        <nav className="hidden lg:flex items-center gap-1 overflow-x-auto">
+        <nav className="hidden lg:flex items-center gap-1 overflow-x-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           {navItems.map((item) => {
             const Icon = item.icon;
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${linkClass(item)}`}
+                className={`flex items-center gap-1.5 px-2.5 xl:px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap shrink-0 ${linkClass(item)}`}
               >
                 <Icon className="h-3.5 w-3.5 shrink-0" />
                 <span>{item.label}</span>
@@ -106,7 +106,7 @@ export function Navbar() {
 
       {/* ── Mobile scrollable nav row ────────────────────────────── */}
       <div className="lg:hidden border-t border-white/[0.06] bg-[#07090e]/95">
-        <div className="flex overflow-x-auto gap-1 px-3 py-2 scrollbar-none">
+        <div className="flex overflow-x-auto gap-1 px-3 py-2 no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
