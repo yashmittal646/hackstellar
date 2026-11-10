@@ -19,7 +19,7 @@ export function Navbar() {
   const pathname = usePathname();
 
   const navItems = [
-    { href: "/", label: "Dashboard", icon: LayoutDashboard, live: true },
+    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, live: true },
     { href: "/agent-lab", label: "Agent Lab", icon: Sparkles, highlight: true },
     { href: "/map", label: "Live Map", icon: Compass },
     { href: "/returns", label: "Returns Fleet", icon: RotateCcw },

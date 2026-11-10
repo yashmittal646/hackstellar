@@ -80,6 +80,36 @@ export default function FraudRadarPage() {
 
   return (
     <div className="container mx-auto max-w-7xl px-4 sm:px-6 py-8 space-y-6">
+
+      {/* Global AI Scanning Banner */}
+      {inspectingId && (
+        <div className="rounded-2xl border border-violet-500/40 bg-violet-950/40 p-4 flex items-center gap-4 animate-pulse">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-700 flex items-center justify-center flex-shrink-0 shadow-lg shadow-violet-500/30">
+            <Bot className="w-5 h-5 text-white" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-0.5">
+              <span className="text-xs font-bold text-violet-300 uppercase tracking-wider">AI Sentinel Active</span>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-500/20 text-violet-300 border border-violet-500/30">
+                <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-ping" />
+                Scanning
+              </span>
+            </div>
+            <p className="text-xs text-white/50">
+              Running deep multi-agent analysis — VisionAgent + FraudSentinel profiling return behavior patterns…
+            </p>
+          </div>
+          <div className="flex gap-1 flex-shrink-0">
+            {[0,1,2,3,4].map(i => (
+              <div
+                key={i}
+                className="w-1 rounded-full bg-violet-400 animate-bounce"
+                style={{ height: `${8 + (i % 3) * 6}px`, animationDelay: `${i * 100}ms` }}
+              />
+            ))}
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-3xl bg-gradient-to-r from-rose-950/30 via-slate-900/90 to-slate-950 border border-rose-500/20">
         <div>

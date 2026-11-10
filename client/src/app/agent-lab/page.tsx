@@ -194,6 +194,188 @@ function ChainStep({ step, index, total }: { step: AgentStep; index: number; tot
   );
 }
 
+// ─── Sequential Pipeline Animation ─────────────────────────────────────────
+
+const PIPELINE_STEPS = [
+  {
+    id: "vision",
+    name: "VisionQualityAgent",
+    label: "Visual Analysis",
+    icon: Eye,
+    color: "from-blue-500 to-cyan-600",
+    textColor: "text-blue-400",
+    borderColor: "border-blue-500/40",
+    bgColor: "bg-blue-500/10",
+    tasks: ["Scanning item surface...", "Detecting defects...", "Grading condition..."],
+  },
+  {
+    id: "fraud",
+    name: "FraudSentinelAgent",
+    label: "Fraud Detection",
+    icon: ShieldAlert,
+    color: "from-red-500 to-rose-600",
+    textColor: "text-rose-400",
+    borderColor: "border-rose-500/40",
+    bgColor: "bg-rose-500/10",
+    tasks: ["Checking return velocity...", "Serial verification...", "Computing risk score..."],
+  },
+  {
+    id: "dispatch",
+    name: "LogisticsDispatcher",
+    label: "Route Optimization",
+    icon: Truck,
+    color: "from-emerald-500 to-teal-600",
+    textColor: "text-emerald-400",
+    borderColor: "border-emerald-500/40",
+    bgColor: "bg-emerald-500/10",
+    tasks: ["Finding nearby hubs...", "Matching demand signals...", "Computing optimal route..."],
+  },
+];
+
+function AgentPipelineAnimation() {
+  const [activeStep, setActiveStep] = useState(0);
+  const [taskIndex, setTaskIndex] = useState(0);
+  const [doneSteps, setDoneSteps] = useState<number[]>([]);
+
+  useEffect(() => {
+    // Cycle through tasks within each step
+    const taskTimer = setInterval(() => {
+      setTaskIndex((prev) => {
+        const next = prev + 1;
+        const tasksInStep = PIPELINE_STEPS[activeStep]?.tasks.length ?? 3;
+        if (next >= tasksInStep) {
+          return prev; // hold last task
+        }
+        return next;
+      });
+    }, 900);
+
+    // Advance to next step every 3s
+    const stepTimer = setInterval(() => {
+      setActiveStep((prev) => {
+        if (prev < PIPELINE_STEPS.length - 1) {
+          setDoneSteps((d) => [...d, prev]);
+          setTaskIndex(0);
+          return prev + 1;
+        }
+        return prev;
+      });
+    }, 2800);
+
+    return () => { clearInterval(taskTimer); clearInterval(stepTimer); };
+  }, [activeStep]);
+
+  return (
+    <div className="rounded-2xl border border-violet-500/20 bg-violet-500/5 p-6 space-y-5">
+      {/* Title */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Bot className="w-4 h-4 text-violet-400 animate-pulse" />
+          <span className="text-sm font-semibold text-white/70">Multi-Agent Pipeline Running</span>
+        </div>
+        <span className="text-xs text-white/30 font-mono animate-pulse">processing…</span>
+      </div>
+
+      {/* Steps */}
+      <div className="relative">
+        {PIPELINE_STEPS.map((step, i) => {
+          const Icon = step.icon;
+          const isDone = doneSteps.includes(i);
+          const isActive = activeStep === i;
+          const isPending = !isDone && !isActive;
+
+          return (
+            <div key={step.id} className="relative">
+              {/* Connecting line */}
+              {i < PIPELINE_STEPS.length - 1 && (
+                <div className="absolute left-5 top-14 w-px h-6 z-0">
+                  <div
+                    className={`w-full h-full transition-all duration-700 ${isDone ? "bg-white/30" : "bg-white/8"}`}
+                  />
+                </div>
+              )}
+
+              <div
+                className={`relative z-10 flex items-start gap-4 p-4 rounded-xl border mb-2 transition-all duration-500 ${
+                  isActive
+                    ? `${step.borderColor} ${step.bgColor} shadow-lg`
+                    : isDone
+                    ? "border-white/10 bg-white/[0.02]"
+                    : "border-white/[0.05] bg-transparent opacity-40"
+                }`}
+              >
+                {/* Icon */}
+                <div
+                  className={`w-10 h-10 rounded-xl bg-gradient-to-br ${step.color} flex items-center justify-center flex-shrink-0 transition-all duration-300 ${
+                    isActive ? "shadow-lg scale-110" : isDone ? "opacity-80" : "opacity-30 grayscale"
+                  }`}
+                >
+                  <Icon className="w-5 h-5 text-white" />
+                </div>
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className={`text-xs font-bold ${isActive ? step.textColor : isDone ? "text-white/60" : "text-white/25"}`}>
+                      {step.name}
+                    </span>
+                    {isDone && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
+                    {isActive && (
+                      <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full ${step.bgColor} ${step.textColor} border ${step.borderColor}`}>
+                        Active
+                      </span>
+                    )}
+                  </div>
+                  <p className={`text-xs transition-all duration-300 ${isActive ? "text-white/60" : isDone ? "text-white/30" : "text-white/15"}`}>
+                    {isDone
+                      ? "✓ " + step.tasks[step.tasks.length - 1]
+                      : isActive
+                      ? step.tasks[Math.min(taskIndex, step.tasks.length - 1)]
+                      : step.label}
+                  </p>
+                  {/* Progress dots */}
+                  {isActive && (
+                    <div className="flex gap-1 mt-2">
+                      {step.tasks.map((_, ti) => (
+                        <div
+                          key={ti}
+                          className={`h-1 rounded-full transition-all duration-500 ${
+                            ti <= taskIndex ? `${step.bgColor.replace("/10", "/60")} flex-1` : "bg-white/10 w-4"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Step number */}
+                <span className={`text-[10px] font-mono flex-shrink-0 ${isActive ? step.textColor : "text-white/20"}`}>
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Orchestrator summary */}
+      <div className="flex items-center gap-2 pt-2 border-t border-white/5">
+        <Bot className="w-3.5 h-3.5 text-purple-400" />
+        <span className="text-xs text-white/40 font-mono">MultiAgentOrchestrator · synthesizing decisions…</span>
+        <span className="ml-auto flex gap-0.5">
+          {[0,1,2].map(i => (
+            <span
+              key={i}
+              className="w-1 h-1 rounded-full bg-purple-400 animate-bounce"
+              style={{ animationDelay: `${i * 150}ms` }}
+            />
+          ))}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function AgentLabPage() {
   const [running, setRunning] = useState(false);
   const [dossier, setDossier] = useState<DossierResult | null>(null);
@@ -397,28 +579,8 @@ export default function AgentLabPage() {
           </div>
         </div>
 
-        {/* Running animation */}
-        {running && (
-          <div className="rounded-2xl border border-violet-500/20 bg-violet-500/5 p-8 flex flex-col items-center gap-4">
-            <div className="flex items-center gap-4">
-              {["VisionQualityAgent", "FraudSentinel", "LogisticsDispatcher"].map((name, i) => (
-                <div key={name} className="flex flex-col items-center gap-2">
-                  <div
-                    className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center"
-                    style={{ animationDelay: `${i * 200}ms` }}
-                  >
-                    {i === 0 && <Eye className="w-6 h-6 text-blue-400 animate-pulse" />}
-                    {i === 1 && <ShieldAlert className="w-6 h-6 text-red-400 animate-pulse" />}
-                    {i === 2 && <Truck className="w-6 h-6 text-emerald-400 animate-pulse" />}
-                  </div>
-                  <span className="text-[10px] text-white/40 text-center w-20 leading-tight">{name}</span>
-                  <Activity className="w-3 h-3 text-white/30 animate-pulse" />
-                </div>
-              ))}
-            </div>
-            <p className="text-white/60 text-sm animate-pulse">Running autonomous multi-agent pipeline…</p>
-          </div>
-        )}
+        {/* Running animation — sequential agent activation */}
+        {running && <AgentPipelineAnimation />}
 
         {error && (
           <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-4 text-red-400 text-sm flex items-center gap-2">

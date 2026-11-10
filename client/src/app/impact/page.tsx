@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { fetchStats, fetchRecentReturns } from "../../lib/api";
 import { DashboardStats, ReturnItem } from "../../types";
@@ -25,6 +25,29 @@ import {
 } from "lucide-react";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
+
+/** Counts up from 0 to `target` over `duration`ms with ease-out cubic */
+function useCountUp(target: number, duration = 1600, start = false): number {
+  const [value, setValue] = useState(0);
+  const rafRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!start || target === 0) return;
+    const startTime = performance.now();
+    const animate = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setValue(Math.round(eased * target));
+      if (progress < 1) rafRef.current = requestAnimationFrame(animate);
+    };
+    rafRef.current = requestAnimationFrame(animate);
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+  }, [target, duration, start]);
+
+  return value;
+}
 
 function conditionColor(grade: string): string {
   switch (grade) {
