@@ -39,7 +39,7 @@ export function HeroSection() {
   useEffect(() => {
     fetch("http://localhost:5000/api/dashboard/stats")
       .then((r) => r.json())
-      .then((d) => setStats(d))
+      .then((d) => setStats(d.data || d))
       .catch(() => {});
   }, []);
 
@@ -114,8 +114,8 @@ export function HeroSection() {
             <motion.div variants={fadeUp} className="flex flex-wrap gap-3">
               {[
                 { icon: Package, label: `${stats?.totalReturns ?? "21"} Returns AI-Analyzed`, color: "text-violet-300 bg-violet-500/10 border-violet-500/20" },
-                { icon: TrendingDown, label: `₹${stats ? Math.round(stats.savings.totalCostSaved).toLocaleString() : "26,896"} Saved`, color: "text-emerald-300 bg-emerald-500/10 border-emerald-500/20" },
-                { icon: Leaf, label: `${stats ? Math.round(stats.savings.totalCo2Saved * 10) / 10 : "1,978"} kg CO₂ Offset`, color: "text-teal-300 bg-teal-500/10 border-teal-500/20" },
+                { icon: TrendingDown, label: `₹${stats?.savings?.totalCostSaved != null ? Math.round(stats.savings.totalCostSaved).toLocaleString() : "26,896"} Saved`, color: "text-emerald-300 bg-emerald-500/10 border-emerald-500/20" },
+                { icon: Leaf, label: `${stats?.savings?.totalCo2Saved != null ? Math.round(stats.savings.totalCo2Saved * 10) / 10 : "1,978"} kg CO₂ Offset`, color: "text-teal-300 bg-teal-500/10 border-teal-500/20" },
               ].map((s) => (
                 <span key={s.label} className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border ${s.color} backdrop-blur-sm`}>
                   <s.icon className="h-3.5 w-3.5" />

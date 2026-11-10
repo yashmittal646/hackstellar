@@ -37,7 +37,7 @@ export function ImpactNumbers() {
   useEffect(() => {
     fetch("http://localhost:5000/api/dashboard/stats")
       .then((r) => r.json())
-      .then((d) => setStats(d))
+      .then((d) => setStats(d.data || d))
       .catch(() => {});
   }, []);
 
@@ -50,7 +50,7 @@ export function ImpactNumbers() {
       color: "text-violet-400",
     },
     {
-      target: stats ? Math.round(stats.savings.totalCostSaved) : 26896,
+      target: stats?.savings?.totalCostSaved != null ? Math.round(stats.savings.totalCostSaved) : 26896,
       prefix: "₹",
       label: "Cost Saved",
       sublabel: "Logistics cost eliminated",
@@ -58,7 +58,7 @@ export function ImpactNumbers() {
       color: "text-emerald-400",
     },
     {
-      target: stats ? Math.round(stats.savings.totalCo2Saved * 10) / 10 : 197.8,
+      target: stats?.savings?.totalCo2Saved != null ? Math.round(stats.savings.totalCo2Saved * 10) / 10 : 197.8,
       suffix: " kg",
       decimals: 1,
       label: "CO₂ Offset",
@@ -67,7 +67,7 @@ export function ImpactNumbers() {
       color: "text-teal-400",
     },
     {
-      target: stats?.routingBreakdown["direct_to_customer"] ?? 8,
+      target: stats?.routingBreakdown?.["direct_to_customer"] ?? 8,
       label: "Warehouse Bypasses",
       sublabel: "Direct customer intercepts",
       icon: Building2,

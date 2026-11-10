@@ -36,15 +36,15 @@ export function DashboardPreview() {
   useEffect(() => {
     fetch("http://localhost:5000/api/dashboard/stats")
       .then((r) => r.json())
-      .then((data) => setStats(data))
+      .then((data) => setStats(data.data || data))
       .catch(() => {});
   }, []);
 
   const total = stats?.totalReturns ?? 21;
-  const cost = stats ? Math.round(stats.savings.totalCostSaved) : 26896;
-  const co2 = stats ? Math.round(stats.savings.totalCo2Saved * 10) / 10 : 197.8;
-  const direct = stats?.routingBreakdown["direct_to_customer"] ?? 8;
-  const hub = stats?.routingBreakdown["nearby_hub"] ?? 8;
+  const cost = stats?.savings?.totalCostSaved != null ? Math.round(stats.savings.totalCostSaved) : 26896;
+  const co2 = stats?.savings?.totalCo2Saved != null ? Math.round(stats.savings.totalCo2Saved * 10) / 10 : 197.8;
+  const direct = stats?.routingBreakdown?.["direct_to_customer"] ?? 8;
+  const hub = stats?.routingBreakdown?.["nearby_hub"] ?? 8;
 
   return (
     <section ref={ref} className="relative py-28 overflow-hidden">
