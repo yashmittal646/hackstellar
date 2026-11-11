@@ -1,6 +1,6 @@
 import { DashboardStats, ReturnItem, FraudLogItem, Hub, Order } from "../types";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+const API_BASE = typeof window !== "undefined" ? "/api" : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api");
 
 export async function fetchStats(): Promise<DashboardStats> {
   const res = await fetch(`${API_BASE}/dashboard/stats`, { cache: "no-store" });

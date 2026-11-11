@@ -35,7 +35,7 @@ export function DashboardPreview() {
   const [stats, setStats] = useState<MiniStats | null>(null);
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/dashboard/stats")
+    fetch("/api/dashboard/stats")
       .then((r) => r.json())
       .then((data) => setStats(data.data || data))
       .catch(() => {});

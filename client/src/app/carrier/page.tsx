@@ -64,7 +64,7 @@ export default function CarrierAppPage() {
   const handleDeliver = async () => {
     if (!selectedReturn) return;
     try {
-      await fetch(`http://localhost:5000/api/returns/${selectedReturn._id}/status`, {
+      await fetch(`/api/returns/${selectedReturn._id}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
