@@ -151,7 +151,7 @@ If the checklist shows broken seal + item mismatch, heavily penalise the score a
       : `Item condition rated ${parsed.conditionLabel || "DEFECTIVE"} (${score}/100). Routed to central warehouse.`;
   }
 
-  const isFraud = parsed.isFraud === true || (!checklist.sealed && !checklist.correctItem) || score <= 20;
+  const isFraud = parsed.isFraud === true || parsed.fraudRisk === "high" || score <= 20;
 
   return {
     conditionScore: score,
@@ -164,8 +164,8 @@ If the checklist shows broken seal + item mismatch, heavily penalise the score a
     recommendation: hasDefects ? "ESCALATE_TO_WAREHOUSE" : (parsed.recommendation || "APPROVE_RETURN"),
     summary: parsed.summary || "Analysis complete.",
     isFraud,
-    fraudRisk: isFraud ? "high" : "low",
-    fraudScore: isFraud ? 92 : 12,
+    fraudRisk: isFraud ? "high" : (score < 50 ? "medium" : "low"),
+    fraudScore: isFraud ? 85 : Math.max(5, Math.min(45, 100 - score)),
     analysedByAI: true,
   };
 }

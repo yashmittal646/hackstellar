@@ -247,7 +247,7 @@ function ScannerContent() {
   const [returnItem, setReturnItem] = useState<ReturnItem | null>(null);
   const [aiResult, setAiResult] = useState<any>(null);
   const [errorMsg, setErrorMsg] = useState("");
-  const [checklist, setChecklist] = useState({ sealed: false, noDamage: false, correctItem: false });
+  const [checklist, setChecklist] = useState({ sealed: true, noDamage: true, correctItem: true });
   const [showManual, setShowManual] = useState(false);
   const [showPhoneQr, setShowPhoneQr] = useState(false);
   const [phoneSession, setPhoneSession] = useState<{ token: string; phoneUrl: string; qrDataUrl: string } | null>(null);
@@ -414,26 +414,18 @@ function ScannerContent() {
   // ── Run Quick Fraud Check ─────────────────────────────────────────────────
   const runFraudCheck = async () => {
     setFraudRunning(true);
+    await new Promise(r => setTimeout(r, 600)); // brief analysis transition
+    setFraudRunning(false);
+    setStage("photo_capture");
+  };
 
-    // Count how many suspicious signals we have
+  const handleReportFraud = () => {
     const signals: string[] = [];
     if (!checklist.sealed) signals.push("Packaging seal broken or missing");
     if (!checklist.noDamage) signals.push("Visible damage or dents on box");
     if (!checklist.correctItem) signals.push("Item does NOT match order label");
-
-    await new Promise(r => setTimeout(r, 1200)); // brief analysis delay for UX
-
-    if (signals.length >= 2) {
-      // HIGH RISK FRAUD — Directly navigate to report issue page!
-      setFraudRunning(false);
-      const defaultIssue = !checklist.sealed ? "tampered_seal" : !checklist.correctItem ? "wrong_item" : "counterfeit";
-      router.push(`/flag-issue?returnId=${returnId || ""}&issue=${defaultIssue}&fraud=true&reasons=${encodeURIComponent(signals.join("; "))}`);
-      return;
-    } else {
-      // LOW/MEDIUM RISK — proceed to photo capture
-      setFraudRunning(false);
-      setStage("photo_capture");
-    }
+    const defaultIssue = !checklist.sealed ? "tampered_seal" : !checklist.correctItem ? "wrong_item" : "damaged";
+    router.push(`/flag-issue?returnId=${returnId || ""}&issue=${defaultIssue}&fraud=true&reasons=${encodeURIComponent(signals.join("; "))}`);
   };
 
   // ── Run Gemini Vision Analysis ────────────────────────────────────────────
@@ -522,7 +514,7 @@ function ScannerContent() {
     setStage("ready"); setBarcode(""); setBarcodePreview(""); setProduct(null);
     setReturnId(null); setReturnItem(null); setAiResult(null); setErrorMsg("");
     setProductPhotos([]); setCaptureMsg(""); setFraudRunning(false);
-    setChecklist({ sealed: false, noDamage: false, correctItem: false });
+    setChecklist({ sealed: true, noDamage: true, correctItem: true });
     router.replace("/scanner");
   };
 
@@ -738,58 +730,65 @@ function ScannerContent() {
           </div>
 
           {/* Risk indicator */}
-          {suspiciousCount > 0 && (
-            <div className={`flex items-center gap-3 p-3 rounded-xl border ${
-              suspiciousCount >= 2
-                ? "bg-red-500/10 border-red-500/30 text-red-300"
-                : "bg-amber-500/10 border-amber-500/30 text-amber-300"
-            }`}>
-              <AlertOctagon className="h-5 w-5 shrink-0" />
+          {suspiciousCount > 0 ? (
+            <div className="flex items-center gap-3 p-3.5 rounded-xl border bg-amber-500/10 border-amber-500/30 text-amber-300">
+              <AlertOctagon className="h-5 w-5 shrink-0 text-amber-400" />
               <div>
                 <p className="font-bold text-sm">
-                  {suspiciousCount >= 2 ? "⚠️ HIGH FRAUD RISK DETECTED" : "⚠️ Suspicious signal — proceed with caution"}
+                  ⚠️ Inspection Note: {suspiciousCount} Checkbox Flagged
                 </p>
                 <p className="text-xs opacity-80 mt-0.5">
-                  {suspiciousCount >= 2
-                    ? "2+ red flags found. AI will likely route to main warehouse."
-                    : "1 red flag noted. Photos required for final verdict."}
+                  Packaging anomaly noted. AI Vision will verify photos to grade item condition and routing.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 p-3.5 rounded-xl border bg-emerald-500/10 border-emerald-500/30 text-emerald-300">
+              <ShieldCheck className="h-5 w-5 shrink-0 text-emerald-400" />
+              <div>
+                <p className="font-bold text-sm">✅ Package Verified Clean (Low Risk)</p>
+                <p className="text-xs text-neutral-300 mt-0.5">
+                  Physical doorstep checks passed. AI will optimize for direct re-delivery or hub.
                 </p>
               </div>
             </div>
           )}
 
-          {suspiciousCount === 0 && Object.values(checklist).every(Boolean) && (
-            <div className="flex items-center gap-3 p-3 rounded-xl border bg-emerald-500/10 border-emerald-500/30 text-emerald-300">
-              <ShieldCheck className="h-5 w-5 shrink-0" />
-              <div>
-                <p className="font-bold text-sm">✅ Package looks clean</p>
-                <p className="text-xs opacity-80 mt-0.5">All checks passed. Proceed to photo inspection.</p>
-              </div>
-            </div>
-          )}
-
-          {/* Quick Fraud Check Button */}
+          {/* Primary Action Button */}
           <button
             onClick={runFraudCheck}
             disabled={fraudRunning}
-            className={`w-full py-4 rounded-xl font-black text-base flex items-center justify-center gap-2 transition-all shadow-lg ${
-              suspiciousCount >= 2
-                ? "bg-red-600 hover:bg-red-500 text-white shadow-red-600/30 animate-pulse"
-                : "bg-amber-500 hover:bg-amber-400 text-black shadow-amber-500/20"
+            className={`w-full py-4 rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-all shadow-lg ${
+              suspiciousCount > 0
+                ? "bg-amber-500 hover:bg-amber-400 text-neutral-950 shadow-amber-500/20"
+                : "bg-emerald-500 hover:bg-emerald-400 text-neutral-950 shadow-emerald-500/20"
             } disabled:opacity-50`}
           >
             {fraudRunning ? (
               <>
                 <Loader2 className="h-5 w-5 animate-spin" />
-                {suspiciousCount >= 2 ? "Navigating to Report Issue…" : "Running Fraud Check…"}
+                Processing Inspection…
               </>
             ) : (
               <>
-                <ShieldAlert className="h-5 w-5" />
-                {suspiciousCount >= 2 ? "🚨 Fraud Detected — Report Issue & Freeze" : "Run Doorstep Fraud Check & Continue"}
+                <Camera className="h-5 w-5" />
+                {suspiciousCount > 0
+                  ? `Proceed to Photo Inspection (${suspiciousCount} Flagged)`
+                  : "Proceed to AI Photo Inspection"}
               </>
             )}
           </button>
+
+          {/* Secondary manual flag button if user genuinely suspects fraud */}
+          {suspiciousCount > 0 && (
+            <button
+              onClick={handleReportFraud}
+              className="w-full py-2.5 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-semibold flex items-center justify-center gap-2 transition-colors"
+            >
+              <ShieldAlert className="h-4 w-4 text-rose-400" />
+              Report Damaged / Tampered Package Directly
+            </button>
+          )}
 
           <button onClick={reset}
             className="w-full py-2.5 rounded-xl border border-slate-700 text-slate-500 text-sm flex items-center justify-center gap-2 hover:text-slate-300 transition-colors">
