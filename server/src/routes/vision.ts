@@ -19,6 +19,8 @@ interface AnalysisResult {
   isFraud?: boolean;
   fraudRisk?: string;
   fraudScore?: number;
+  needsMorePhotos?: boolean;
+  evidenceRequestReason?: string | null;
 }
 
 async function analyzeWithGemini(
@@ -49,6 +51,12 @@ Your task: Carefully analyze the ${images.length} product photo(s) provided and 
 
 DECISION THRESHOLD: If you are ≥90% confident in your assessment, make a DEFINITIVE decision. Do NOT default to the middle-ground option just to be safe. A clear, confident verdict is more valuable than a hedged one.
 
+INSUFFICIENT EVIDENCE & QUALITY CHECK:
+If the photo(s) are severely blurred, too dark, out of frame, or lack visible detail needed to confidently assess the item's condition or genuine status:
+- Set "needsMorePhotos": true
+- Set "evidenceRequestReason": "<Concise instruction to courier, e.g. 'Image is blurry or too dark. Please take a clear close-up of the product label and packaging seal.'>"
+Otherwise, set "needsMorePhotos": false, "evidenceRequestReason": null.
+
 Return ONLY valid JSON (no markdown, no explanation outside JSON):
 {
   "conditionScore": <integer 0-100>,
@@ -56,9 +64,11 @@ Return ONLY valid JSON (no markdown, no explanation outside JSON):
   "conditionLabel": <"PRISTINE" | "LIKE_NEW" | "GOOD" | "FAIR" | "DEFECTIVE">,
   "defects": [<list of specific defects observed, e.g. "scratched surface", "dented corner", "broken seal">],
   "positives": [<list of good observations, e.g. "original packaging intact", "no visible wear">],
+  "needsMorePhotos": <boolean — true if evidence is insufficient or photo is blurry/unclear>,
+  "evidenceRequestReason": <string or null — instruction to courier for additional photo>,
   "routing": <"direct_to_customer" | "nearby_hub" | "main_warehouse">,
   "routingReason": <one clear sentence explaining the routing decision>,
-  "recommendation": <"APPROVE_RETURN" | "SEND_TO_HUB" | "ESCALATE_TO_WAREHOUSE">,
+  "recommendation": <"APPROVE_RETURN" | "SEND_TO_HUB" | "ESCALATE_TO_WAREHOUSE" | "REQUEST_MORE_PHOTOS">,
   "summary": <2–3 sentence human-readable verdict a delivery rider can understand>
 }
 
@@ -152,21 +162,25 @@ If the checklist shows broken seal + item mismatch, heavily penalise the score a
   }
 
   const isFraud = parsed.isFraud === true || parsed.fraudRisk === "high" || score <= 20;
+  const needsMorePhotos = parsed.needsMorePhotos === true || (parsed.recommendation === "REQUEST_MORE_PHOTOS");
+  const evidenceRequestReason = parsed.evidenceRequestReason || (needsMorePhotos ? "Photo is unclear. Please provide an additional clear photo of the product." : null);
 
   return {
     conditionScore: score,
-    confidence: Math.max(90, Math.min(100, Number(parsed.confidence) || 92)),
+    confidence: Math.max(80, Math.min(100, Number(parsed.confidence) || 90)),
     conditionLabel: parsed.conditionLabel || (score >= 80 ? "LIKE_NEW" : score >= 60 ? "GOOD" : "DEFECTIVE"),
     defects,
     positives: Array.isArray(parsed.positives) ? parsed.positives : [],
     routing,
     routingReason,
-    recommendation: hasDefects ? "ESCALATE_TO_WAREHOUSE" : (parsed.recommendation || "APPROVE_RETURN"),
+    recommendation: needsMorePhotos ? "REQUEST_MORE_PHOTOS" : (hasDefects ? "ESCALATE_TO_WAREHOUSE" : (parsed.recommendation || "APPROVE_RETURN")),
     summary: parsed.summary || "Analysis complete.",
     isFraud,
     fraudRisk: isFraud ? "high" : (score < 50 ? "medium" : "low"),
     fraudScore: isFraud ? 85 : Math.max(5, Math.min(45, 100 - score)),
     analysedByAI: true,
+    needsMorePhotos,
+    evidenceRequestReason,
   };
 }
 

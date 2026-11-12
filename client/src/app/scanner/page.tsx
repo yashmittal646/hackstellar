@@ -313,12 +313,12 @@ function ScannerContent() {
     }
   };
 
-  // If loaded with returnId, go directly to fraud_check
+  // If loaded with returnId, go directly to photo capture
   useEffect(() => {
     const rid = searchParams.get("returnId");
     if (rid) {
       setReturnId(rid);
-      setStage("fraud_check");
+      setStage("photo_capture");
       fetch(`/api/returns/${rid}`).then(r => r.json()).then(j => setReturnItem(j.data)).catch(() => {});
     }
   }, []);
@@ -337,8 +337,8 @@ function ScannerContent() {
       if (!json.success) throw new Error(json.message);
       setProduct(json.data.product);
       if (json.data.return?._id) setReturnId(json.data.return._id);
-      // Advance to fraud check (not checklist)
-      setStage("fraud_check");
+      // As soon as scanned, prompt rider directly for condition photos
+      setStage("photo_capture");
     } catch (e: any) {
       setErrorMsg("Product lookup failed: " + (e?.message ?? "Network error"));
       setStage("error");
@@ -373,7 +373,7 @@ function ScannerContent() {
           }
           if (ocrJson.data.return?._id) setReturnId(ocrJson.data.return._id);
           setBarcode(code);
-          setStage("fraud_check");
+          setStage("photo_capture");
           return;
         }
       } catch {}
@@ -448,13 +448,24 @@ function ScannerContent() {
       const json = await res.json();
       if (!json.success) throw new Error(json.message);
 
-      // If AI detected fraud in the photos -> directly navigate to flag-issue!
-      if (json.data.isFraud || json.data.fraudRisk === "high") {
+      // If AI detected severe fraud/counterfeit in the photos -> navigate to flag-issue
+      if (json.data.isFraud && json.data.conditionScore < 20) {
         router.push(
           `/flag-issue?returnId=${returnId || ""}&issue=counterfeit&fraud=true&reasons=${encodeURIComponent(
             json.data.summary || "Severe fraud or counterfeit indicators detected in photos"
           )}`
         );
+        return;
+      }
+
+      // If AI determined insufficient evidence -> ask rider for more photos!
+      if (json.data.needsMorePhotos) {
+        setAiResult(json.data);
+        setCaptureMsg(
+          json.data.evidenceRequestReason ||
+            "Insufficient evidence to grade condition accurately. Please add another photo from a different angle or showing the serial/seal."
+        );
+        setStage("photo_capture");
         return;
       }
 
@@ -569,12 +580,11 @@ function ScannerContent() {
         </div>
         {/* Stage indicator */}
         <div className="ml-auto flex items-center gap-1.5">
-          {["fraud_check", "photo_capture", "analyzing", "result"].map((s, i) => (
+          {["photo_capture", "analyzing", "result"].map((s, i) => (
             <div key={s} className={`h-1.5 w-6 rounded-full transition-all ${
               stage === "result" ? "bg-emerald-500"
-              : stage === "analyzing" ? (i <= 2 ? "bg-indigo-500" : "bg-slate-700")
-              : stage === "photo_capture" ? (i <= 1 ? "bg-indigo-500" : "bg-slate-700")
-              : stage === "fraud_check" ? (i === 0 ? "bg-indigo-500" : "bg-slate-700")
+              : stage === "analyzing" ? (i <= 1 ? "bg-cyan-500" : "bg-slate-700")
+              : stage === "photo_capture" ? (i === 0 ? "bg-cyan-500" : "bg-slate-700")
               : "bg-slate-700"
             }`} />
           ))}
@@ -800,48 +810,66 @@ function ScannerContent() {
       {/* ══ PHOTO CAPTURE ═══════════════════════════════════════════════════ */}
       {stage === "photo_capture" && (
         <div className="space-y-4">
-          {/* Product name reminder */}
-          {displayProduct && (
-            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-2.5 flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0" />
-              <p className="text-emerald-300 text-sm font-semibold">Fraud check passed — take product photos</p>
+          {/* Identified Scanned Product Details */}
+          <ProductCard product={displayProduct} barcode={barcode} />
+
+          {/* Insufficient Evidence Warning Banner (if AI requested more photos) */}
+          {Boolean(aiResult?.needsMorePhotos || captureMsg) && (
+            <div className="bg-amber-500/15 border border-amber-500/30 rounded-2xl p-4 animate-in fade-in">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-amber-300 font-bold text-sm">
+                    ⚠️ Insufficient Evidence — Additional Photo Requested by AI
+                  </p>
+                  <p className="text-amber-200/90 text-xs mt-1 leading-relaxed">
+                    {captureMsg || aiResult?.evidenceRequestReason || "Photo angle or lighting was inconclusive. Please take an additional clear photo of the product/seal to complete AI condition grading."}
+                  </p>
+                </div>
+              </div>
             </div>
           )}
 
-          <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
-            <p className="text-white font-bold text-sm flex items-center gap-2 mb-1">
-              <Sparkles className="h-4 w-4 text-indigo-400" />
-              Step 2 · AI Photo Inspection
-            </p>
-            <p className="text-slate-400 text-xs">
-              Take 1–3 clear photos. Gemini AI will analyze condition and decide: Customer / Local Hub / Main Warehouse.
+          {/* Prompt Banner */}
+          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4">
+            <div className="flex items-center justify-between mb-1.5">
+              <p className="text-white font-bold text-sm flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-cyan-400" />
+                Doorstep AI Condition Inspection
+              </p>
+              <span className="font-mono text-xs px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">
+                {productPhotos.length}/4 Photos
+              </span>
+            </div>
+            <p className="text-slate-400 text-xs leading-relaxed">
+              Take photos of the product and packaging. Gemini AI will evaluate wear, scratches, or seal status to give a condition judgement and route autonomously (Peer Delivery / Micro-Hub / Warehouse).
             </p>
           </div>
 
           {/* Photo thumbnails */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
             {productPhotos.map((p, i) => (
-              <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-slate-700 bg-slate-900">
+              <div key={i} className="relative aspect-square rounded-2xl overflow-hidden border border-white/[0.12] bg-slate-900 shadow-md">
                 <img src={p.url} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
                 <button
                   onClick={() => removePhoto(i)}
-                  className="absolute top-1 right-1 h-6 w-6 rounded-full bg-black/70 flex items-center justify-center hover:bg-red-500/80 transition-colors"
+                  className="absolute top-1.5 right-1.5 h-6 w-6 rounded-full bg-black/80 flex items-center justify-center hover:bg-rose-500 transition-colors"
                 >
-                  <X className="h-3 w-3 text-white" />
+                  <X className="h-3.5 w-3.5 text-white" />
                 </button>
-                <div className="absolute bottom-1 left-1 bg-black/60 rounded px-1.5 py-0.5 text-[10px] text-white font-mono">
-                  {i + 1}
+                <div className="absolute bottom-1.5 left-1.5 bg-black/70 backdrop-blur-sm rounded px-1.5 py-0.5 text-[10px] text-white font-mono">
+                  #{i + 1}
                 </div>
               </div>
             ))}
 
-            {productPhotos.length < 3 && (
+            {productPhotos.length < 4 && (
               <label
                 htmlFor="product-photo-input"
-                className="aspect-square rounded-xl border-2 border-dashed border-slate-700 hover:border-indigo-500/60 bg-slate-900/40 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                className="aspect-square rounded-2xl border-2 border-dashed border-cyan-500/30 hover:border-cyan-400 bg-cyan-500/[0.03] hover:bg-cyan-500/[0.08] flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all"
               >
-                <ImagePlus className="h-7 w-7 text-slate-600" />
-                <span className="text-[11px] text-slate-600">Add photo</span>
+                <Camera className="h-6 w-6 text-cyan-400" />
+                <span className="text-[11px] font-semibold text-cyan-300">+ Add Photo</span>
               </label>
             )}
           </div>
@@ -854,28 +882,33 @@ function ScannerContent() {
             style={{ position: "fixed", top: 0, left: 0, width: "1px", height: "1px", opacity: 0, pointerEvents: "none" }}
           />
 
-          {captureMsg && (
-            <p className="text-xs text-amber-400 text-center">{captureMsg}</p>
-          )}
-
           <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-3 text-xs text-slate-500 space-y-1">
-            <p>📸 <strong className="text-slate-400">Photo tips for best AI results:</strong></p>
-            <p>• Show all sides if possible (front, back, damaged area)</p>
-            <p>• Good lighting — no dark shadows on the product</p>
-            <p>• Include any visible damage or defects in frame</p>
+            <p>📸 <strong className="text-slate-400">Photo tips for accurate AI evaluation:</strong></p>
+            <p>• Show front face and retail packaging clearly</p>
+            <p>• Capture seal or serial number label if present</p>
+            <p>• Include any scratches, dents, or signs of wear in frame</p>
           </div>
 
-          {/* Analyze button */}
-          <button
-            onClick={runVisionAnalysis}
-            disabled={productPhotos.length === 0}
-            className="w-full py-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white font-bold text-base flex items-center justify-center gap-2 transition-colors shadow-lg shadow-indigo-500/20"
-          >
-            <Sparkles className="h-5 w-5" />
-            {productPhotos.length === 0
-              ? "Take at least 1 photo first"
-              : `Analyze ${productPhotos.length} Photo${productPhotos.length > 1 ? "s" : ""} with Gemini AI`}
-          </button>
+          {/* Action button: Capture or Analyze */}
+          {productPhotos.length === 0 ? (
+            <label
+              htmlFor="product-photo-input"
+              className="w-full py-4 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-neutral-950 font-bold text-base flex items-center justify-center gap-2 cursor-pointer transition shadow-lg shadow-cyan-500/20"
+            >
+              <Camera className="h-5 w-5" />
+              Take or Upload Product Photo
+            </label>
+          ) : (
+            <button
+              onClick={runVisionAnalysis}
+              className="w-full py-4 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-neutral-950 font-bold text-base flex items-center justify-center gap-2 transition shadow-lg shadow-cyan-500/20"
+            >
+              <Sparkles className="h-5 w-5" />
+              {aiResult?.needsMorePhotos
+                ? `Re-Analyze with ${productPhotos.length} Photo${productPhotos.length > 1 ? "s" : ""}`
+                : `Analyze Condition with Gemini AI (${productPhotos.length} Photo${productPhotos.length > 1 ? "s" : ""})`}
+            </button>
+          )}
 
           {/* Skip */}
           <button
