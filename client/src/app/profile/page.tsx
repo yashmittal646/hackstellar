@@ -103,11 +103,14 @@ export default function ProfilePage() {
     if (!rider || updatingStatus) return;
     try {
       setUpdatingStatus(true);
-      const updated = await updateRiderStatus(rider.riderId, newStatus);
+      const targetId = rider.riderId || rider._id;
+      const updated = await updateRiderStatus(targetId, newStatus);
       setRider(updated);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2500);
     } catch (err: any) {
       console.error(err);
-      alert("Failed to update status");
+      alert(err.message || "Failed to update status");
     } finally {
       setUpdatingStatus(false);
     }
@@ -116,7 +119,8 @@ export default function ProfilePage() {
   const handleSaveProfile = async () => {
     if (!rider) return;
     try {
-      const updated = await updateRiderProfile(rider.riderId, {
+      const targetId = rider.riderId || rider._id;
+      const updated = await updateRiderProfile(targetId, {
         phone: phoneInput,
         email: emailInput,
       });
@@ -126,7 +130,7 @@ export default function ProfilePage() {
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err: any) {
       console.error(err);
-      alert("Failed to save profile changes");
+      alert(err.message || "Failed to save profile changes");
     }
   };
 

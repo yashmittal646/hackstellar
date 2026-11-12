@@ -1,5 +1,16 @@
 import { Request, Response } from "express";
+import mongoose from "mongoose";
 import { Rider, DeliveryTask, Return } from "../models";
+
+/**
+ * Helper to build rider query whether identifier is ObjectId or riderId string (e.g. DEMO-RIDER-01, RDR-...)
+ */
+function getRiderQuery(id: string) {
+  if (mongoose.Types.ObjectId.isValid(id) && id.length === 24) {
+    return { $or: [{ _id: id }, { riderId: id }] };
+  }
+  return { riderId: id };
+}
 
 /**
  * GET /api/riders
@@ -50,9 +61,7 @@ export async function getCurrentRider(req: Request, res: Response): Promise<void
 export async function getRiderById(req: Request, res: Response): Promise<void> {
   try {
     const { id } = req.params;
-    const rider = id.startsWith("RDR-")
-      ? await Rider.findOne({ riderId: id })
-      : await Rider.findById(id);
+    const rider = await Rider.findOne(getRiderQuery(id));
 
     if (!rider) {
       res.status(404).json({ success: false, message: "Rider not found" });
@@ -73,9 +82,8 @@ export async function updateRiderStatus(req: Request, res: Response): Promise<vo
     const { id } = req.params;
     const { status } = req.body;
 
-    const query = id.startsWith("RDR-") ? { riderId: id } : { _id: id };
     const rider = await Rider.findOneAndUpdate(
-      query,
+      getRiderQuery(id),
       { $set: { status } },
       { new: true }
     );
@@ -92,21 +100,25 @@ export async function updateRiderStatus(req: Request, res: Response): Promise<vo
 
 /**
  * PATCH /api/riders/:id
- * Update rider profile info (phone, vehicle plate, battery)
+ * Update rider profile info (phone, email, vehicle plate, battery)
  */
 export async function updateRiderProfile(req: Request, res: Response): Promise<void> {
   try {
     const { id } = req.params;
-    const { phone, vehicleNumber, batteryLevel, model } = req.body;
+    const { phone, email, vehicleNumber, batteryLevel, model } = req.body;
 
-    const query = id.startsWith("RDR-") ? { riderId: id } : { _id: id };
     const updateObj: any = {};
     if (phone) updateObj.phone = phone;
+    if (email) updateObj.email = email;
     if (vehicleNumber) updateObj["vehicle.plateNumber"] = vehicleNumber;
     if (model) updateObj["vehicle.model"] = model;
     if (batteryLevel !== undefined) updateObj["vehicle.batteryLevel"] = batteryLevel;
 
-    const rider = await Rider.findOneAndUpdate(query, { $set: updateObj }, { new: true });
+    const rider = await Rider.findOneAndUpdate(
+      getRiderQuery(id),
+      { $set: updateObj },
+      { new: true }
+    );
 
     if (!rider) {
       res.status(404).json({ success: false, message: "Rider not found" });
@@ -125,9 +137,7 @@ export async function updateRiderProfile(req: Request, res: Response): Promise<v
 export async function getRiderTasks(req: Request, res: Response): Promise<void> {
   try {
     const { id } = req.params;
-    const rider = id.startsWith("RDR-")
-      ? await Rider.findOne({ riderId: id })
-      : await Rider.findById(id);
+    const rider = await Rider.findOne(getRiderQuery(id));
 
     if (!rider) {
       res.status(404).json({ success: false, message: "Rider not found" });
