@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import mongoose from "mongoose";
 import { Return, IReturn } from "../models";
 import { AppError } from "../middleware/errorHandler";
 
@@ -110,24 +111,41 @@ export async function createReturn(req: Request, res: Response, next: NextFuncti
 // PATCH /api/returns/:id/status — Update return status
 export async function updateReturnStatus(req: Request, res: Response, next: NextFunction) {
   try {
-    const { status, location, notes } = req.body;
+    const { status, location, notes, issueType } = req.body;
 
-    const returnDoc = await Return.findById(req.params.id);
+    const id = req.params.id;
+    const query = mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { returnId: id };
+    const returnDoc = await Return.findOne(query);
+
     if (!returnDoc) {
       throw new AppError("Return not found", 404);
     }
 
     returnDoc.status = status;
+
+    if (status === "frozen" || status === "rejected") {
+      returnDoc.fraudRisk = "high";
+      returnDoc.fraudScore = 92;
+      returnDoc.fraudFlags = returnDoc.fraudFlags || [];
+      if (issueType && !returnDoc.fraudFlags.includes(issueType)) {
+        returnDoc.fraudFlags.push(issueType);
+      }
+    }
+
     returnDoc.timeline.push({
       status,
       timestamp: new Date(),
-      location,
-      notes,
+      location: location || "Doorstep",
+      notes: notes || (status === "frozen" ? "Return frozen at doorstep. Item returned to customer." : undefined),
     });
 
     await returnDoc.save();
 
-    res.json({ success: true, data: returnDoc });
+    res.json({
+      success: true,
+      message: status === "frozen" ? "Return has been frozen. Do not accept package." : "Status updated",
+      data: returnDoc,
+    });
   } catch (error) {
     next(error);
   }

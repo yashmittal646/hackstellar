@@ -8,7 +8,9 @@ export type ReturnStatus =
   | "routed"
   | "out_for_delivery"
   | "delivered"
-  | "warehouse_received";
+  | "warehouse_received"
+  | "frozen"
+  | "rejected";
 
 export type RoutingDestination = "direct_to_customer" | "nearby_hub" | "central_warehouse";
 
@@ -110,6 +112,8 @@ const returnSchema = new Schema<IReturn>(
         "out_for_delivery",
         "delivered",
         "warehouse_received",
+        "frozen",
+        "rejected",
       ],
       default: "initiated",
     },

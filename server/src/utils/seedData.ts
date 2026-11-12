@@ -119,11 +119,13 @@ function daysFromNow(days: number): Date {
 // ============================================================
 // SEED FUNCTION
 // ============================================================
-async function seed() {
+export async function seed(disconnect: boolean = true) {
   console.log("🌱 Starting seed...\n");
 
-  await mongoose.connect(config.mongodbUri);
-  console.log("✅ Connected to MongoDB\n");
+  if (mongoose.connection.readyState === 0) {
+    await mongoose.connect(config.mongodbUri);
+    console.log("✅ Connected to MongoDB\n");
+  }
 
   // Clear existing data
   await Promise.all([
@@ -401,8 +403,10 @@ async function seed() {
   console.log(`\n   💰 Total cost saved: ₹${totalCostSaved.toLocaleString()}`);
   console.log(`   🌱 Total CO₂ saved: ${totalCo2Saved.toFixed(2)} kg`);
 
-  await mongoose.disconnect();
-  console.log("\n🔌 Disconnected from MongoDB");
+  if (disconnect) {
+    await mongoose.disconnect();
+    console.log("\n🔌 Disconnected from MongoDB");
+  }
 }
 
 function getFlagDescription(flag: string): string {
@@ -429,8 +433,11 @@ function getFlagWeight(flag: string): number {
   return weights[flag] || 10;
 }
 
-seed().catch((err) => {
-  console.error("❌ Seed failed:", err);
-  process.exit(1);
-});
+const isDirectRun = process.argv[1]?.replace(/\\/g, "/").includes("seedData");
+if (isDirectRun) {
+  seed(true).catch((err) => {
+    console.error("❌ Seed failed:", err);
+    process.exit(1);
+  });
+}
 

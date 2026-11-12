@@ -36,7 +36,7 @@ export function ImpactNumbers() {
   const [stats, setStats] = useState<Stats | null>(null);
 
   useEffect(() => {
-    fetch("/api/dashboard/stats")
+    fetch("http://localhost:5000/api/dashboard/stats")
       .then((r) => r.json())
       .then((d) => setStats(d.data || d))
       .catch(() => {});

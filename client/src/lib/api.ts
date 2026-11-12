@@ -1,6 +1,6 @@
 import { DashboardStats, ReturnItem, FraudLogItem, Hub, Order } from "../types";
 
-const API_BASE = typeof window !== "undefined" ? "/api" : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api");
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 export async function fetchStats(): Promise<DashboardStats> {
   const res = await fetch(`${API_BASE}/dashboard/stats`, { cache: "no-store" });
@@ -110,6 +110,29 @@ export async function askCopilot(context: any, question: string): Promise<string
 export async function fetchAllReturns(): Promise<ReturnItem[]> {
   const res = await fetch(`${API_BASE}/returns?limit=50`, { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to fetch returns");
+  const data = await res.json();
+  return data.data;
+}
+
+export interface BarcodeResult {
+  barcode: string;
+  recognized: boolean;
+  source: string;
+  product: {
+    _id: string;
+    name: string;
+    brand: string;
+    category: string;
+    price: number;
+    imageUrl: string;
+    sku: string;
+  };
+  return: { _id: string; returnId: string; status: string } | null;
+}
+
+export async function lookupBarcode(barcode: string): Promise<BarcodeResult> {
+  const res = await fetch(`${API_BASE}/barcode/${barcode}`, { cache: "no-store" });
+  if (!res.ok) throw new Error("Barcode lookup failed");
   const data = await res.json();
   return data.data;
 }
