@@ -162,9 +162,44 @@ export async function seed(disconnect: boolean = true) {
   );
   console.log(`🏢 Created ${hubs.length} hubs`);
 
-  // --- 3. Seed Users (40 users across different cities) ---
-  const usersData = [];
-  for (let i = 0; i < 40; i++) {
+  // --- 3. Seed Users (40 users across different cities + 2 Explicit Demo IDs) ---
+  const usersData: any[] = [
+    {
+      name: "Amit Verma (Demo Customer 1)",
+      email: "demo.user1@orbitreturn.io",
+      phone: "+91 98111 00001",
+      address: {
+        street: "Flat 4B, Regal Building, Connaught Place",
+        city: "Delhi",
+        state: "Delhi",
+        pincode: "110001",
+        coordinates: { lat: 28.6315, lng: 77.2167 },
+      },
+      accountCreatedAt: daysAgo(120),
+      totalOrders: 14,
+      totalReturns: 1,
+      fraudScore: 8,
+      role: "customer" as const,
+    },
+    {
+      name: "Riya Sen (Demo Customer 2)",
+      email: "demo.user2@orbitreturn.io",
+      phone: "+91 98222 00002",
+      address: {
+        street: "14B, Pali Hill Road, Bandra West",
+        city: "Mumbai",
+        state: "Maharashtra",
+        pincode: "400050",
+        coordinates: { lat: 19.0596, lng: 72.8295 },
+      },
+      accountCreatedAt: daysAgo(45),
+      totalOrders: 9,
+      totalReturns: 4,
+      fraudScore: 48,
+      role: "customer" as const,
+    },
+  ];
+  for (let i = 0; i < 38; i++) {
     const city = pick(CITIES);
     const coords = jitterCoords(city.lat, city.lng);
     const firstName = pick(FIRST_NAMES);
@@ -383,7 +418,7 @@ export async function seed(disconnect: boolean = true) {
     console.log(`🚨 Created ${fraudLogs.length} fraud logs`);
   }
 
-  // --- 6. Seed Riders ---
+  // --- 6. Seed Riders (Featuring 2 Demo IDs) ---
   const delhiHub = hubs.find((h) => h.code === "DEL-HUB-01") || hubs[0];
   const mumbaiHub = hubs.find((h) => h.code === "BOM-HUB-01") || hubs[1];
   const blrHub = hubs.find((h) => h.code === "BLR-HUB-01") || hubs[2];
@@ -391,9 +426,9 @@ export async function seed(disconnect: boolean = true) {
   const ridersData = [
     {
       name: "Vikram Sharma",
-      riderId: "RDR-DEL-044",
+      riderId: "DEMO-RIDER-01",
       phone: "+91 98101 23456",
-      email: "vikram.sharma@orbitreturn.io",
+      email: "demo.rider1@orbitreturn.io",
       avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
       vehicle: {
         type: "EV_2W" as const,
@@ -421,14 +456,14 @@ export async function seed(disconnect: boolean = true) {
     },
     {
       name: "Ananya Patel",
-      riderId: "RDR-BOM-012",
+      riderId: "DEMO-RIDER-02",
       phone: "+91 98202 34567",
-      email: "ananya.patel@orbitreturn.io",
+      email: "demo.rider2@orbitreturn.io",
       avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80",
       vehicle: {
-        type: "EV_2W" as const,
-        plateNumber: "MH-02-EV-1290",
-        model: "Ola S1 Pro Gen 2",
+        type: "EV_3W" as const,
+        plateNumber: "MH-02-EV-9901",
+        model: "Euler HiLoad EV Commercial",
         batteryLevel: 92,
       },
       assignedHub: {
@@ -446,7 +481,7 @@ export async function seed(disconnect: boolean = true) {
         completedToday: 7,
         rating: 4.95,
         totalDeliveries: 612,
-        activeTasks: 2,
+        activeTasks: 4,
       },
     },
     {
@@ -697,8 +732,154 @@ export async function seed(disconnect: boolean = true) {
     },
   ];
 
-  const tasks = await DeliveryTask.insertMany(tasksData);
-  console.log(`📋 Created ${tasks.length} delivery & pickup tasks for rider ${vikram.name}`);
+  // --- 8. Seed Delivery Tasks for Second Demo Rider (Ananya Patel - DEMO-RIDER-02) ---
+  const ananya = riders[1];
+  const ananyaTasksData = [
+    {
+      taskId: "TSK-BOM-9101",
+      taskType: "DIRECT_PEER_DELIVERY" as const,
+      rider: ananya._id,
+      returnItem: returns[5]?._id,
+      itemDetails: {
+        title: "Apple MacBook Air M3 15-inch",
+        brand: "Apple",
+        category: "Electronics",
+        grade: "PRISTINE",
+        value: 149900,
+        barcode: "APL-MBA-M3-15",
+      },
+      pickupAddress: {
+        name: "Zoya Akhtar",
+        phone: "+91 98200 11223",
+        street: "Bandra Kurla Complex, Tower 3",
+        city: "Mumbai",
+        coordinates: { lat: 19.0688, lng: 72.8703 },
+      },
+      deliveryAddress: {
+        name: "Kabir Khan (Direct Buyer)",
+        phone: "+91 98211 22334",
+        street: "Juhu Tara Road, Opp Palm Beach",
+        city: "Mumbai",
+        coordinates: { lat: 19.1025, lng: 72.8265 },
+      },
+      status: "IN_TRANSIT" as const,
+      otp: "5521",
+      priority: "EXPRESS" as const,
+      sequence: 1,
+      estimatedMinutes: 18,
+      distanceKm: 5.4,
+      notes: "Express Peer Handover! Cross-docking bypass active.",
+    },
+    {
+      taskId: "TSK-BOM-9102",
+      taskType: "RETURN_PICKUP" as const,
+      rider: ananya._id,
+      returnItem: returns[6]?._id,
+      itemDetails: {
+        title: "Dyson V15 Detect Vacuum Cleaner",
+        brand: "Dyson",
+        category: "Home Appliances",
+        grade: "LIKE_NEW",
+        value: 62900,
+        barcode: "DYS-V15-DET",
+      },
+      pickupAddress: {
+        name: "Farhan Saeed",
+        phone: "+91 98233 44556",
+        street: "Worli Sea Face, Sea View Apt 9",
+        city: "Mumbai",
+        coordinates: { lat: 19.0178, lng: 72.8155 },
+      },
+      deliveryAddress: {
+        name: "Mumbai Central Return Micro-Hub",
+        phone: "+91 22 2493 0011",
+        street: "Lower Parel Industrial Estate",
+        city: "Mumbai",
+        coordinates: { lat: 18.998, lng: 72.831 },
+      },
+      status: "ARRIVED" as const,
+      otp: "8843",
+      priority: "HIGH" as const,
+      sequence: 2,
+      estimatedMinutes: 6,
+      distanceKm: 2.1,
+      notes: "Customer ready with packed Dyson unit and power brick.",
+    },
+    {
+      taskId: "TSK-BOM-9103",
+      taskType: "HUB_DROP" as const,
+      rider: ananya._id,
+      returnItem: returns[7]?._id,
+      itemDetails: {
+        title: "JBL Charge 5 Bluetooth Speaker",
+        brand: "JBL",
+        category: "Electronics",
+        grade: "GOOD",
+        value: 15999,
+        barcode: "JBL-CHG5",
+      },
+      pickupAddress: {
+        name: "Sameer Joshi",
+        phone: "+91 98244 55667",
+        street: "Dadar West, Ranade Road",
+        city: "Mumbai",
+        coordinates: { lat: 19.0222, lng: 72.8435 },
+      },
+      deliveryAddress: {
+        name: "Mumbai West QC & Refurb Center",
+        phone: "+91 22 2844 7799",
+        street: "Andheri East Logistics Park",
+        city: "Mumbai",
+        coordinates: { lat: 19.1136, lng: 72.8697 },
+      },
+      status: "ASSIGNED" as const,
+      otp: "2091",
+      priority: "NORMAL" as const,
+      sequence: 3,
+      estimatedMinutes: 25,
+      distanceKm: 7.8,
+      notes: "Minor box tear during transit. Tag for secondary inspection.",
+    },
+    {
+      taskId: "TSK-BOM-9104",
+      taskType: "DIRECT_PEER_DELIVERY" as const,
+      rider: ananya._id,
+      returnItem: returns[8]?._id,
+      itemDetails: {
+        title: "Puma RS-X Running Shoes (Size UK 9)",
+        brand: "Puma",
+        category: "Footwear",
+        grade: "PRISTINE",
+        value: 8999,
+        barcode: "PMA-RSX-RN",
+      },
+      pickupAddress: {
+        name: "Natasha Roy",
+        phone: "+91 98255 66778",
+        street: "Lokhandwala Complex, Andheri West",
+        city: "Mumbai",
+        coordinates: { lat: 19.1412, lng: 72.8258 },
+      },
+      deliveryAddress: {
+        name: "Sunil Shetty (Buyer)",
+        phone: "+91 98266 77889",
+        street: "Versova Beach Road",
+        city: "Mumbai",
+        coordinates: { lat: 19.1351, lng: 72.8143 },
+      },
+      status: "DELIVERED" as const,
+      otp: "4410",
+      priority: "NORMAL" as const,
+      sequence: 4,
+      estimatedMinutes: 0,
+      distanceKm: 1.8,
+      notes: "Handed over successfully with customer signature.",
+      completedAt: new Date(Date.now() - 48 * 60 * 1000),
+    },
+  ];
+
+  const tasks = await DeliveryTask.insertMany([...tasksData, ...ananyaTasksData]);
+  console.log(`📋 Created ${tasks.length} delivery & pickup tasks across demo riders`);
 
   // --- Summary ---
   console.log("\n✅ Seed complete! Summary:");

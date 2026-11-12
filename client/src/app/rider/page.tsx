@@ -25,7 +25,24 @@ import {
   ArrowRight,
   ShieldCheck,
   Check,
+  Sparkles,
+  Truck,
 } from "lucide-react";
+
+const DEMO_RIDERS = [
+  {
+    id: "DEMO-RIDER-01",
+    name: "Vikram Sharma",
+    city: "Delhi NCR",
+    vehicle: "Ather 450X (EV 2W)",
+  },
+  {
+    id: "DEMO-RIDER-02",
+    name: "Ananya Patel",
+    city: "Mumbai Central",
+    vehicle: "Euler HiLoad (EV Van)",
+  },
+];
 
 function getTaskTypeBadge(type: DeliveryTaskItem["taskType"]) {
   switch (type) {
@@ -78,6 +95,7 @@ function getStatusBadge(status: DeliveryTaskItem["status"]) {
 }
 
 export default function RiderShiftConsole() {
+  const [activeDemoId, setActiveDemoId] = useState<string>("DEMO-RIDER-01");
   const [rider, setRider] = useState<RiderProfile | null>(null);
   const [tasks, setTasks] = useState<DeliveryTaskItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,10 +104,11 @@ export default function RiderShiftConsole() {
   const [otpInput, setOtpInput] = useState("");
   const [otpError, setOtpError] = useState<string | null>(null);
 
-  const loadData = async () => {
+  const loadData = async (riderId?: string) => {
     try {
       setLoading(true);
-      const riderData = await fetchCurrentRider();
+      const targetId = riderId || activeDemoId;
+      const riderData = await fetchCurrentRider(targetId);
       setRider(riderData);
       if (riderData?.riderId) {
         const tasksData = await fetchRiderTasks(riderData.riderId);
@@ -103,8 +122,19 @@ export default function RiderShiftConsole() {
   };
 
   useEffect(() => {
-    loadData();
+    const savedId = typeof window !== "undefined" ? localStorage.getItem("orbit_demo_rider_id") : null;
+    const initialId = savedId || "DEMO-RIDER-01";
+    setActiveDemoId(initialId);
+    loadData(initialId);
   }, []);
+
+  const handleSwitchDemo = (demoId: string) => {
+    setActiveDemoId(demoId);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("orbit_demo_rider_id", demoId);
+    }
+    loadData(demoId);
+  };
 
   const handleAdvanceStatus = async (task: DeliveryTaskItem, nextStatus: string) => {
     try {
@@ -140,12 +170,44 @@ export default function RiderShiftConsole() {
 
   return (
     <div className="min-h-screen bg-[#07090e] px-4 pt-5 pb-20 max-w-2xl mx-auto w-full">
+      {/* ── Demo Switcher Banner ─────────────────────────────────── */}
+      <div className="mb-4 p-3 rounded-xl bg-gradient-to-r from-cyan-500/10 via-white/[0.02] to-emerald-500/10 border border-white/[0.08] flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-cyan-400 shrink-0" />
+          <span className="text-xs text-white font-semibold">Demo Persona:</span>
+        </div>
+        <div className="flex items-center gap-2">
+          {DEMO_RIDERS.map((d) => {
+            const isSelected = (rider?.riderId === d.id) || (activeDemoId === d.id);
+            return (
+              <button
+                key={d.id}
+                onClick={() => handleSwitchDemo(d.id)}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition border ${
+                  isSelected
+                    ? "bg-white text-neutral-950 border-white shadow-sm font-bold"
+                    : "bg-white/[0.03] text-neutral-400 hover:text-white border-white/[0.08]"
+                }`}
+              >
+                <span className={`h-1.5 w-1.5 rounded-full ${isSelected ? "bg-emerald-500" : "bg-neutral-500"}`} />
+                <span>{d.name.split(" ")[0]}</span>
+                <span className="font-mono text-[10px] opacity-75">({d.city.split(" ")[0]})</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* ── Rider Profile Header Bar ─────────────────────────────── */}
       <div className="flex items-center justify-between gap-4 mb-6 p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-md">
         <Link href="/profile" className="flex items-center gap-3.5 group flex-1 min-w-0">
           <div className="relative shrink-0">
             <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-cyan-500/20 via-neutral-900 to-emerald-500/20 border border-white/[0.12] flex items-center justify-center text-cyan-300 group-hover:scale-105 transition">
-              <Bike className="h-6 w-6" />
+              {rider?.vehicle?.type === "EV_3W" ? (
+                <Truck className="h-6 w-6" />
+              ) : (
+                <Bike className="h-6 w-6" />
+              )}
             </div>
             <span className="absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full bg-emerald-400 border-2 border-[#07090e] animate-pulse" />
           </div>
@@ -154,13 +216,13 @@ export default function RiderShiftConsole() {
               <h1 className="text-white font-bold text-base leading-tight truncate group-hover:text-cyan-300 transition">
                 {rider?.name || "Vikram Sharma"}
               </h1>
-              <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-white/[0.06] text-neutral-300 border border-white/[0.1]">
-                {rider?.riderId || "RDR-DEL-044"}
+              <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-white/[0.06] text-cyan-300 border border-white/[0.1]">
+                {rider?.riderId || "DEMO-RIDER-01"}
               </span>
             </div>
             <p className="text-neutral-400 text-xs mt-0.5 flex items-center gap-1 font-mono truncate">
-              <MapPin className="h-3 w-3 text-cyan-400 shrink-0" />
-              {rider?.assignedHub?.name || "Delhi NCR Hub"} • EV Ather 450X
+              <MapPin className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
+              {rider?.assignedHub?.name || "Delhi NCR Hub"} • {rider?.vehicle?.model || "Ather 450X"} ({rider?.vehicle?.batteryLevel ?? 85}% batt)
             </p>
           </div>
         </Link>
@@ -399,7 +461,7 @@ export default function RiderShiftConsole() {
             </div>
 
             <p className="text-xs text-neutral-300 mb-4">
-              Ask customer for the 4-digit verification code to confirm handover:
+              Ask customer for the verification code to confirm handover:
             </p>
 
             <div className="space-y-3">
@@ -444,7 +506,9 @@ export default function RiderShiftConsole() {
       <div className="mt-6 p-4 rounded-xl bg-white/[0.02] border border-white/[0.08] flex items-center gap-3">
         <Clock className="h-5 w-5 text-neutral-400 shrink-0" />
         <div>
-          <p className="text-xs text-neutral-300 font-medium">Shift active in South Delhi Zone</p>
+          <p className="text-xs text-neutral-300 font-medium">
+            Shift active in {rider?.assignedHub?.name || "Delhi NCR"} Zone
+          </p>
           <p className="text-[11px] text-neutral-400 mt-0.5">
             Deliveries and reverse pickups synchronize autonomously with the central routing engine.
           </p>

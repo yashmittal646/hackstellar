@@ -137,8 +137,9 @@ export async function lookupBarcode(barcode: string): Promise<BarcodeResult> {
   return data.data;
 }
 
-export async function fetchCurrentRider(): Promise<RiderProfile> {
-  const res = await fetch(`${API_BASE}/riders/current`, { cache: "no-store" });
+export async function fetchCurrentRider(riderId?: string): Promise<RiderProfile> {
+  const url = riderId ? `${API_BASE}/riders/current?riderId=${encodeURIComponent(riderId)}` : `${API_BASE}/riders/current`;
+  const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to fetch active rider profile");
   const data = await res.json();
   return data.data;

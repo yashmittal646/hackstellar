@@ -20,10 +20,19 @@ export async function getRiders(req: Request, res: Response): Promise<void> {
  */
 export async function getCurrentRider(req: Request, res: Response): Promise<void> {
   try {
-    let rider = await Rider.findOne({ status: "ON_DUTY" });
-    if (!rider) {
-      rider = await Rider.findOne();
+    const { riderId } = req.query;
+    let rider = null;
+
+    if (riderId) {
+      rider = await Rider.findOne({ riderId: String(riderId) });
     }
+    if (!rider) {
+      rider =
+        (await Rider.findOne({ riderId: "DEMO-RIDER-01" })) ||
+        (await Rider.findOne({ status: "ON_DUTY" })) ||
+        (await Rider.findOne());
+    }
+
     if (!rider) {
       res.status(404).json({ success: false, message: "No rider found" });
       return;
