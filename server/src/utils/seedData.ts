@@ -14,6 +14,8 @@ import { Hub } from "../models/Hub";
 import { Order } from "../models/Order";
 import { Return } from "../models/Return";
 import { FraudLog } from "../models/FraudLog";
+import { Rider } from "../models/Rider";
+import { DeliveryTask } from "../models/DeliveryTask";
 
 // ============================================================
 // DATA: Indian Cities with coordinates
@@ -135,6 +137,8 @@ export async function seed(disconnect: boolean = true) {
     Order.deleteMany({}),
     Return.deleteMany({}),
     FraudLog.deleteMany({}),
+    Rider.deleteMany({}),
+    DeliveryTask.deleteMany({}),
   ]);
   console.log("🗑️  Cleared existing data\n");
 
@@ -378,6 +382,323 @@ export async function seed(disconnect: boolean = true) {
     const fraudLogs = await FraudLog.insertMany(fraudLogsData);
     console.log(`🚨 Created ${fraudLogs.length} fraud logs`);
   }
+
+  // --- 6. Seed Riders ---
+  const delhiHub = hubs.find((h) => h.code === "DEL-HUB-01") || hubs[0];
+  const mumbaiHub = hubs.find((h) => h.code === "BOM-HUB-01") || hubs[1];
+  const blrHub = hubs.find((h) => h.code === "BLR-HUB-01") || hubs[2];
+
+  const ridersData = [
+    {
+      name: "Vikram Sharma",
+      riderId: "RDR-DEL-044",
+      phone: "+91 98101 23456",
+      email: "vikram.sharma@orbitreturn.io",
+      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      vehicle: {
+        type: "EV_2W" as const,
+        plateNumber: "DL-01-EV-4412",
+        model: "Ather 450X Gen 3",
+        batteryLevel: 85,
+      },
+      assignedHub: {
+        hubId: delhiHub._id,
+        name: delhiHub.name,
+        city: delhiHub.address.city,
+      },
+      currentLocation: {
+        lat: 28.6139,
+        lng: 77.209,
+        address: "Connaught Place, New Delhi",
+      },
+      status: "ON_DUTY" as const,
+      shiftStats: {
+        completedToday: 5,
+        rating: 4.9,
+        totalDeliveries: 428,
+        activeTasks: 3,
+      },
+    },
+    {
+      name: "Ananya Patel",
+      riderId: "RDR-BOM-012",
+      phone: "+91 98202 34567",
+      email: "ananya.patel@orbitreturn.io",
+      avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80",
+      vehicle: {
+        type: "EV_2W" as const,
+        plateNumber: "MH-02-EV-1290",
+        model: "Ola S1 Pro Gen 2",
+        batteryLevel: 92,
+      },
+      assignedHub: {
+        hubId: mumbaiHub._id,
+        name: mumbaiHub.name,
+        city: mumbaiHub.address.city,
+      },
+      currentLocation: {
+        lat: 19.076,
+        lng: 72.8777,
+        address: "Bandra Kurla Complex, Mumbai",
+      },
+      status: "ON_DUTY" as const,
+      shiftStats: {
+        completedToday: 7,
+        rating: 4.95,
+        totalDeliveries: 612,
+        activeTasks: 2,
+      },
+    },
+    {
+      name: "Rahul Verma",
+      riderId: "RDR-BLR-008",
+      phone: "+91 98403 45678",
+      email: "rahul.verma@orbitreturn.io",
+      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+      vehicle: {
+        type: "EV_2W" as const,
+        plateNumber: "KA-01-EV-0845",
+        model: "TVS iQube Electric",
+        batteryLevel: 74,
+      },
+      assignedHub: {
+        hubId: blrHub._id,
+        name: blrHub.name,
+        city: blrHub.address.city,
+      },
+      currentLocation: {
+        lat: 12.9716,
+        lng: 77.5946,
+        address: "Koramangala 5th Block, Bengaluru",
+      },
+      status: "ON_DUTY" as const,
+      shiftStats: {
+        completedToday: 4,
+        rating: 4.88,
+        totalDeliveries: 350,
+        activeTasks: 2,
+      },
+    },
+    {
+      name: "Priya Nair",
+      riderId: "RDR-HYD-021",
+      phone: "+91 98490 56789",
+      email: "priya.nair@orbitreturn.io",
+      avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80",
+      vehicle: {
+        type: "EV_2W" as const,
+        plateNumber: "TS-09-EV-2114",
+        model: "Hero Vida V1 Pro",
+        batteryLevel: 90,
+      },
+      assignedHub: {
+        hubId: delhiHub._id,
+        name: "Hyderabad Tech Hub",
+        city: "Hyderabad",
+      },
+      currentLocation: {
+        lat: 17.385,
+        lng: 78.4867,
+        address: "Hitec City, Hyderabad",
+      },
+      status: "BREAK" as const,
+      shiftStats: {
+        completedToday: 6,
+        rating: 4.92,
+        totalDeliveries: 510,
+        activeTasks: 1,
+      },
+    },
+  ];
+
+  const riders = await Rider.insertMany(ridersData);
+  console.log(`🛵 Created ${riders.length} active delivery riders`);
+
+  // --- 7. Seed Delivery Tasks for Primary Rider (Vikram Sharma) ---
+  const vikram = riders[0];
+  const sampleReturns = returns.slice(0, 5);
+
+  const tasksData = [
+    {
+      taskId: "TSK-DEL-8839",
+      taskType: "RETURN_PICKUP" as const,
+      rider: vikram._id,
+      returnItem: sampleReturns[0]?._id,
+      itemDetails: {
+        title: "Apple iPhone 15 Pro Max 256GB",
+        brand: "Apple",
+        category: "Electronics",
+        grade: "PRISTINE",
+        value: 159900,
+        barcode: "APL-IP15PM-256",
+      },
+      pickupAddress: {
+        name: "Amit Verma",
+        phone: "+91 98111 22334",
+        street: "Flat 4B, Regal Building, Connaught Place",
+        city: "New Delhi",
+        coordinates: { lat: 28.6315, lng: 77.2167 },
+      },
+      deliveryAddress: {
+        name: "Delhi NCR Micro-Hub Dock A",
+        phone: "+91 11 2341 5678",
+        street: "Okhla Industrial Area Phase III",
+        city: "New Delhi",
+        coordinates: { lat: 28.5355, lng: 77.2725 },
+      },
+      status: "ARRIVED" as const,
+      otp: "4821",
+      priority: "HIGH" as const,
+      sequence: 1,
+      estimatedMinutes: 8,
+      distanceKm: 1.4,
+      notes: "Customer confirmed sealed retail box. Doorstep visual grade required.",
+    },
+    {
+      taskId: "TSK-DEL-8840",
+      taskType: "DIRECT_PEER_DELIVERY" as const,
+      rider: vikram._id,
+      returnItem: sampleReturns[1]?._id,
+      itemDetails: {
+        title: "Sony WH-1000XM5 Wireless Headphones",
+        brand: "Sony",
+        category: "Electronics",
+        grade: "PRISTINE",
+        value: 29990,
+        barcode: "SNY-WH1000XM5",
+      },
+      pickupAddress: {
+        name: "Rohit Malhotra",
+        phone: "+91 98222 33445",
+        street: "B-12, Barakhamba Road",
+        city: "New Delhi",
+        coordinates: { lat: 28.6289, lng: 77.2285 },
+      },
+      deliveryAddress: {
+        name: "Neha Sharma (Matched Peer Order)",
+        phone: "+91 98333 44556",
+        street: "House 88, Defence Colony Flyover Road",
+        city: "New Delhi",
+        coordinates: { lat: 28.5729, lng: 77.2345 },
+      },
+      status: "IN_TRANSIT" as const,
+      otp: "7194",
+      priority: "EXPRESS" as const,
+      sequence: 2,
+      estimatedMinutes: 14,
+      distanceKm: 3.8,
+      notes: "Direct Peer Intercept! Deliver immediately to new buyer without hub transit.",
+    },
+    {
+      taskId: "TSK-DEL-8841",
+      taskType: "HUB_DROP" as const,
+      rider: vikram._id,
+      returnItem: sampleReturns[2]?._id,
+      itemDetails: {
+        title: "Samsung Galaxy S24 Ultra 256GB",
+        brand: "Samsung",
+        category: "Electronics",
+        grade: "DEFECTIVE",
+        value: 129999,
+        barcode: "SAM-GS24U-256",
+      },
+      pickupAddress: {
+        name: "Vikas Mehra",
+        phone: "+91 98444 55667",
+        street: "Sector 14, R.K. Puram",
+        city: "New Delhi",
+        coordinates: { lat: 28.5645, lng: 77.1789 },
+      },
+      deliveryAddress: {
+        name: "Delhi Repair & Triage Staging Hub",
+        phone: "+91 11 2685 9900",
+        street: "Mayapuri Industrial Area Phase II",
+        city: "New Delhi",
+        coordinates: { lat: 28.6385, lng: 77.1215 },
+      },
+      status: "ASSIGNED" as const,
+      otp: "3302",
+      priority: "NORMAL" as const,
+      sequence: 3,
+      estimatedMinutes: 22,
+      distanceKm: 6.5,
+      notes: "Cosmetic flaw on bezel. Stage in repair rack for refurbishment.",
+    },
+    {
+      taskId: "TSK-DEL-8842",
+      taskType: "RETURN_PICKUP" as const,
+      rider: vikram._id,
+      returnItem: sampleReturns[3]?._id,
+      itemDetails: {
+        title: "Nike Air Jordan 1 Retro High",
+        brand: "Nike",
+        category: "Footwear",
+        grade: "LIKE_NEW",
+        value: 16995,
+        barcode: "NKE-AJ1-RH",
+      },
+      pickupAddress: {
+        name: "Siddharth Jain",
+        phone: "+91 98555 66778",
+        street: "Block C, Greater Kailash 1",
+        city: "New Delhi",
+        coordinates: { lat: 28.5535, lng: 77.2412 },
+      },
+      deliveryAddress: {
+        name: "South Delhi Micro-Fulfillment Staging",
+        phone: "+91 11 2923 1122",
+        street: "Nehru Place Logistics Yard",
+        city: "New Delhi",
+        coordinates: { lat: 28.5494, lng: 77.2524 },
+      },
+      status: "ASSIGNED" as const,
+      otp: "9150",
+      priority: "NORMAL" as const,
+      sequence: 4,
+      estimatedMinutes: 30,
+      distanceKm: 2.1,
+      notes: "Size mismatch. Original box and tags intact.",
+    },
+    {
+      taskId: "TSK-DEL-8835",
+      taskType: "DIRECT_PEER_DELIVERY" as const,
+      rider: vikram._id,
+      returnItem: sampleReturns[4]?._id,
+      itemDetails: {
+        title: "Levi's 511 Slim Fit Jeans 32W",
+        brand: "Levi's",
+        category: "Clothing",
+        grade: "PRISTINE",
+        value: 3999,
+        barcode: "LEV-511-SF",
+      },
+      pickupAddress: {
+        name: "Karan Johar",
+        phone: "+91 98666 77889",
+        street: "A-5, Hauz Khas Enclave",
+        city: "New Delhi",
+        coordinates: { lat: 28.5494, lng: 77.2001 },
+      },
+      deliveryAddress: {
+        name: "Pooja Hegde (Direct Buyer)",
+        phone: "+91 98777 88990",
+        street: "Flat 12, Green Park Main",
+        city: "New Delhi",
+        coordinates: { lat: 28.5585, lng: 77.2065 },
+      },
+      status: "DELIVERED" as const,
+      otp: "1148",
+      priority: "HIGH" as const,
+      sequence: 5,
+      estimatedMinutes: 0,
+      distanceKm: 1.2,
+      notes: "Successfully delivered. Peer handoff complete.",
+      completedAt: new Date(Date.now() - 35 * 60 * 1000),
+    },
+  ];
+
+  const tasks = await DeliveryTask.insertMany(tasksData);
+  console.log(`📋 Created ${tasks.length} delivery & pickup tasks for rider ${vikram.name}`);
 
   // --- Summary ---
   console.log("\n✅ Seed complete! Summary:");

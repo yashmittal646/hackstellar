@@ -4,4 +4,5 @@ export { Hub, IHub } from "./Hub";
 export { Order, IOrder } from "./Order";
 export { Return, IReturn, ReturnStatus, RoutingDestination, ConditionGrade } from "./Return";
 export { FraudLog, IFraudLog } from "./FraudLog";
-
+export { Rider, IRider } from "./Rider";
+export { DeliveryTask, IDeliveryTask, TaskType, TaskStatus } from "./DeliveryTask";

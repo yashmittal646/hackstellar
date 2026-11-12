@@ -1,4 +1,4 @@
-import { DashboardStats, ReturnItem, FraudLogItem, Hub, Order } from "../types";
+import { DashboardStats, ReturnItem, FraudLogItem, Hub, Order, RiderProfile, DeliveryTaskItem } from "../types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
@@ -136,3 +136,60 @@ export async function lookupBarcode(barcode: string): Promise<BarcodeResult> {
   const data = await res.json();
   return data.data;
 }
+
+export async function fetchCurrentRider(): Promise<RiderProfile> {
+  const res = await fetch(`${API_BASE}/riders/current`, { cache: "no-store" });
+  if (!res.ok) throw new Error("Failed to fetch active rider profile");
+  const data = await res.json();
+  return data.data;
+}
+
+export async function fetchRiderTasks(riderId: string): Promise<DeliveryTaskItem[]> {
+  const res = await fetch(`${API_BASE}/riders/${riderId}/tasks`, { cache: "no-store" });
+  if (!res.ok) throw new Error("Failed to fetch rider delivery tasks");
+  const data = await res.json();
+  return data.data;
+}
+
+export async function updateTaskStatus(
+  taskId: string,
+  status: string,
+  otp?: string
+): Promise<DeliveryTaskItem> {
+  const res = await fetch(`${API_BASE}/riders/tasks/${taskId}/status`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status, otp }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || "Failed to update task status");
+  }
+  return data.data;
+}
+
+export async function updateRiderStatus(riderId: string, status: string): Promise<RiderProfile> {
+  const res = await fetch(`${API_BASE}/riders/${riderId}/status`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Failed to update rider status");
+  return data.data;
+}
+
+export async function updateRiderProfile(
+  riderId: string,
+  payload: Partial<RiderProfile>
+): Promise<RiderProfile> {
+  const res = await fetch(`${API_BASE}/riders/${riderId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Failed to update rider profile");
+  return data.data;
+}
+

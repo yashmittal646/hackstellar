@@ -14,6 +14,7 @@ import agentRoutes from "./routes/agentRoutes";
 import scanRelayRoutes from "./routes/scanRelay";
 import barcodeRoutes from "./routes/barcode";
 import visionRoutes from "./routes/vision";
+import riderRoutes from "./routes/riderRoutes";
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use("/api/agents", agentRoutes);
 app.use("/api/scan-relay", scanRelayRoutes);
 app.use("/api/barcode", barcodeRoutes);
 app.use("/api/vision", visionRoutes);
+app.use("/api/riders", riderRoutes);
 
 // Health check
 app.get("/api/health", (_req, res) => {

@@ -177,3 +177,73 @@ export interface FraudLogItem {
   createdAt: string;
 }
 
+export interface RiderProfile {
+  _id: string;
+  name: string;
+  riderId: string;
+  phone: string;
+  email: string;
+  avatar?: string;
+  vehicle: {
+    type: "EV_2W" | "EV_3W" | "VAN";
+    plateNumber: string;
+    model: string;
+    batteryLevel: number;
+  };
+  assignedHub: {
+    hubId?: string;
+    name: string;
+    city: string;
+  };
+  currentLocation: {
+    lat: number;
+    lng: number;
+    address?: string;
+  };
+  status: "ON_DUTY" | "BUSY" | "BREAK" | "OFF_DUTY";
+  shiftStats: {
+    completedToday: number;
+    rating: number;
+    totalDeliveries: number;
+    activeTasks: number;
+  };
+}
+
+export interface DeliveryTaskItem {
+  _id: string;
+  taskId: string;
+  taskType: "RETURN_PICKUP" | "DIRECT_PEER_DELIVERY" | "HUB_DROP";
+  rider: string;
+  itemDetails: {
+    title: string;
+    brand: string;
+    category: string;
+    grade?: string;
+    value: number;
+    barcode?: string;
+  };
+  pickupAddress: {
+    name: string;
+    phone: string;
+    street: string;
+    city: string;
+    coordinates: { lat: number; lng: number };
+  };
+  deliveryAddress: {
+    name: string;
+    phone: string;
+    street: string;
+    city: string;
+    coordinates: { lat: number; lng: number };
+  };
+  status: "ASSIGNED" | "ACCEPTED" | "ARRIVED" | "PICKED_UP" | "IN_TRANSIT" | "DELIVERED" | "FAILED";
+  otp: string;
+  priority: "HIGH" | "NORMAL" | "EXPRESS";
+  sequence: number;
+  estimatedMinutes: number;
+  distanceKm: number;
+  notes?: string;
+  completedAt?: string;
+  createdAt?: string;
+}
+

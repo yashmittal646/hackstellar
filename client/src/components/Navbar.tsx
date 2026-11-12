@@ -6,7 +6,7 @@ import {
   Navigation,
   ScanLine,
   MapPin,
-  MessageSquare,
+  User,
   ShieldAlert,
   Truck,
 } from "lucide-react";
@@ -15,7 +15,7 @@ const navItems = [
   { href: "/rider", label: "My Tasks", icon: Navigation },
   { href: "/scanner", label: "Scan & Inspect", icon: ScanLine },
   { href: "/map", label: "Live Map", icon: MapPin },
-  { href: "/feedback", label: "Feedback", icon: MessageSquare },
+  { href: "/profile", label: "Profile", icon: User },
   { href: "/flag-issue", label: "Report Issue", icon: ShieldAlert },
 ];
 
