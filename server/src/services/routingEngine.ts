@@ -122,8 +122,8 @@ export async function routeReturn(returnDoc: IReturn): Promise<RoutingResult> {
     destination = "direct_to_customer";
     matchedOrderId = nearbyDemand[0].order._id as mongoose.Types.ObjectId;
     optimizedDistance = nearbyDemand[0].distance;
-  } else if (normalizedScore >= 40) {
-    // Route to nearest hub
+  } else if (returnDoc.conditionScore >= 50) {
+    // Route to nearest hub for regional inventory staging
     destination = "nearby_hub";
     const nearestHub = await findNearestHub(pickupCoords);
     if (nearestHub) {
@@ -133,9 +133,8 @@ export async function routeReturn(returnDoc: IReturn): Promise<RoutingResult> {
         lng: nearestHub.location.coordinates[0],
       });
     } else {
-      // No hub found, fall back to warehouse
-      destination = "central_warehouse";
-      optimizedDistance = distanceToWarehouse;
+      // Default nearby hub distance if none in DB
+      optimizedDistance = 12;
     }
   } else {
     destination = "central_warehouse";

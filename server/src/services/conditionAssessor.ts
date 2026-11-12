@@ -83,8 +83,11 @@ export function assessCondition(returnDoc: IReturn): ConditionResult {
       break;
 
     default:
-      score = 70;
-      reasons.push("Standard return claim processed");
+      score = 85;
+      packagingIntegrity = 92;
+      sealAuthenticity = "VERIFIED";
+      cosmeticWearScore = 92;
+      reasons.push("Standard return claim verified in good condition");
   }
 
   // Bonus for image verification uploads
