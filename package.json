@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "description": "Returns That Never Go Home — Intelligent E-Commerce Return Management System",
   "scripts": {
-    "dev": "concurrently -n \"API,WEB\" -c \"blue,green\" \"npm --prefix server run dev\" \"npm --prefix client run dev\"",
+    "dev": "concurrently -n \"API,WEB,BRIDGE\" -c \"blue,green,magenta\" \"npm --prefix server run dev\" \"npm --prefix client run dev\" \"npm --prefix scanner-bridge start\"",
     "dev:server": "npm --prefix server run dev",
     "dev:client": "npm --prefix client run dev",
+    "scanner-bridge": "npm --prefix scanner-bridge start",
     "seed": "npm --prefix server run seed"
   },
   "devDependencies": {
